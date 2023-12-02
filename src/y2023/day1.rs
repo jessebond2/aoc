@@ -7,7 +7,7 @@ fn parse_line(line: &String) -> u32 {
 }
 
 fn parse_line2(line: &String) -> u32 {
-    let mut digitVec: Vec<u32> = vec![];
+    let mut digit_vec: Vec<u32> = vec![];
     let chars: Vec<_> = line.chars().collect();
 
     let mut i = 0;
@@ -15,7 +15,7 @@ fn parse_line2(line: &String) -> u32 {
         let char = chars[i];
         match char {
             '0'..='9' => {
-                digitVec.push(char.to_digit(10).unwrap());
+                digit_vec.push(char.to_digit(10).unwrap());
                 i += 1;
                 continue;
             }
@@ -26,13 +26,13 @@ fn parse_line2(line: &String) -> u32 {
 
             match slice {
                 "one" => {
-                    digitVec.push(1);
+                    digit_vec.push(1);
                 }
                 "two" => {
-                    digitVec.push(2);
+                    digit_vec.push(2);
                 }
                 "six" => {
-                    digitVec.push(6);
+                    digit_vec.push(6);
                 }
                 _ => {}
             }
@@ -42,13 +42,13 @@ fn parse_line2(line: &String) -> u32 {
 
             match slice {
                 "four" => {
-                    digitVec.push(4);
+                    digit_vec.push(4);
                 }
                 "five" => {
-                    digitVec.push(5);
+                    digit_vec.push(5);
                 }
                 "nine" => {
-                    digitVec.push(9);
+                    digit_vec.push(9);
                 }
                 _ => {}
             }
@@ -58,13 +58,13 @@ fn parse_line2(line: &String) -> u32 {
 
             match slice {
                 "three" => {
-                    digitVec.push(3);
+                    digit_vec.push(3);
                 }
                 "seven" => {
-                    digitVec.push(7);
+                    digit_vec.push(7);
                 }
                 "eight" => {
-                    digitVec.push(8);
+                    digit_vec.push(8);
                 }
                 _ => {}
             }
@@ -73,11 +73,11 @@ fn parse_line2(line: &String) -> u32 {
         i += 1
     }
 
-    let first = digitVec[0];
-    let last = digitVec[digitVec.len() - 1];
+    let first = digit_vec[0];
+    let last = digit_vec[digit_vec.len() - 1];
 
     let sum = first * 10 + last;
-    println!("Line {} becomes {:?} = sum {}", line, digitVec, sum);
+    println!("Line {} becomes {:?} = sum {}", line, digit_vec, sum);
 
     sum
 }
