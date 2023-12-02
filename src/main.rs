@@ -31,4 +31,21 @@ fn main() {
 
     let result_2 = crate::y2023::day1::part_2(&input);
     println!("Result from day1 part 2: {}", result_2);
+
+    let input =
+        read_lines_to_vec("./input/2023/day2.txt").expect("Unable to parse file into integers");
+
+    println!();
+    println!();
+    println!("================================================");
+    println!();
+    println!("2023");
+    println!();
+    println!("================================================");
+    println!();
+    let result_1 = crate::y2023::day2::part_1(&input);
+    println!("Result from day2 part 1: {}", result_1);
+
+    let result_2 = crate::y2023::day2::part_2(&input);
+    println!("Result from day2 part 2: {}", result_2);
 }
