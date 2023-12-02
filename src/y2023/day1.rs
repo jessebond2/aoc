@@ -27,60 +27,44 @@ fn parse_line2(line: &String) -> u32 {
             match slice {
                 "one" => {
                     digitVec.push(1);
-                    i += 3;
-                    continue;
                 }
                 "two" => {
                     digitVec.push(2);
-                    i += 3;
-                    continue;
                 }
                 "six" => {
                     digitVec.push(6);
-                    i += 3;
-                    continue;
                 }
                 _ => {}
             }
-        } else if i + 4 <= line.len() {
+        }
+        if i + 4 <= line.len() {
             let slice = &line[i..i + 4];
 
             match slice {
                 "four" => {
                     digitVec.push(4);
-                    i += 4;
-                    continue;
                 }
                 "five" => {
                     digitVec.push(5);
-                    i += 4;
-                    continue;
                 }
                 "nine" => {
                     digitVec.push(9);
-                    i += 4;
-                    continue;
                 }
                 _ => {}
             }
-        } else if i + 5 <= line.len() {
+        }
+        if i + 5 <= line.len() {
             let slice = &line[i..i + 5];
 
             match slice {
                 "three" => {
                     digitVec.push(3);
-                    i += 5;
-                    continue;
                 }
                 "seven" => {
                     digitVec.push(7);
-                    i += 5;
-                    continue;
                 }
                 "eight" => {
                     digitVec.push(8);
-                    i += 5;
-                    continue;
                 }
                 _ => {}
             }
