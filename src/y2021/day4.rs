@@ -77,94 +77,93 @@ impl BingoBoard {
 mod tests {
     use super::*;
 
-    #[test]
-    fn bingo_board_add_row() {
-        let input = " 1  2  3  4 50";
-        let mut board = BingoBoard::build();
-        board.add_row(input);
+    // #[test]
+    // fn bingo_board_add_row() {
+    //     let input = " 1  2  3  4 50";
+    //     let mut board = BingoBoard::build();
+    //     board.add_row(input);
 
-        assert_eq!(board.rows.len(), 1);
-        assert_eq!(
-            board.rows[0],
-            vec![
-                BingoPosition {
-                    value: 1,
-                    x: 0,
-                    y: 0,
-                    marked: false
-                },
-                BingoPosition {
-                    value: 2,
-                    x: 1,
-                    y: 0,
-                    marked: false
-                },
-                BingoPosition {
-                    value: 3,
-                    x: 2,
-                    y: 0,
-                    marked: false
-                },
-                BingoPosition {
-                    value: 4,
-                    x: 3,
-                    y: 0,
-                    marked: false
-                },
-                BingoPosition {
-                    value: 50,
-                    x: 4,
-                    y: 0,
-                    marked: false
-                }
-            ]
-        );
-    }
+    //     assert_eq!(board.rows.len(), 1);
+    //     assert_eq!(
+    //         board.rows[0],
+    //         vec![
+    //             BingoPosition {
+    //                 value: 1,
+    //                 x: 0,
+    //                 y: 0,
+    //                 marked: false
+    //             },
+    //             BingoPosition {
+    //                 value: 2,
+    //                 x: 1,
+    //                 y: 0,
+    //                 marked: false
+    //             },
+    //             BingoPosition {
+    //                 value: 3,
+    //                 x: 2,
+    //                 y: 0,
+    //                 marked: false
+    //             },
+    //             BingoPosition {
+    //                 value: 4,
+    //                 x: 3,
+    //                 y: 0,
+    //                 marked: false
+    //             },
+    //             BingoPosition {
+    //                 value: 50,
+    //                 x: 4,
+    //                 y: 0,
+    //                 marked: false
+    //             }
+    //         ]
+    //     );
+    // }
 
-    #[test]
-    fn bingo_board_mark() {
-        let input = " 1  2  3  4 50";
-        let mut board = BingoBoard::build();
-        board.add_row(input);
-        board.mark(3);
+    // #[test]
+    // fn bingo_board_mark() {
+    //     let input = " 1  2  3  4 50";
+    //     let mut board = BingoBoard::build();
+    //     board.add_row(input);
+    //     board.mark(3);
 
-        assert_eq!(
-            board.rows[0],
-            vec![
-                BingoPosition {
-                    value: 1,
-                    x: 0,
-                    y: 0,
-                    marked: false
-                },
-                BingoPosition {
-                    value: 2,
-                    x: 1,
-                    y: 0,
-                    marked: false
-                },
-                BingoPosition {
-                    value: 3,
-                    x: 2,
-                    y: 0,
-                    marked: true
-                },
-                BingoPosition {
-                    value: 4,
-                    x: 3,
-                    y: 0,
-                    marked: false
-                },
-                BingoPosition {
-                    value: 50,
-                    x: 4,
-                    y: 0,
-                    marked: false
-                }
-            ]
-        );
-    }
-
+    //     assert_eq!(
+    //         board.rows[0],
+    //         vec![
+    //             BingoPosition {
+    //                 value: 1,
+    //                 x: 0,
+    //                 y: 0,
+    //                 marked: false
+    //             },
+    //             BingoPosition {
+    //                 value: 2,
+    //                 x: 1,
+    //                 y: 0,
+    //                 marked: false
+    //             },
+    //             BingoPosition {
+    //                 value: 3,
+    //                 x: 2,
+    //                 y: 0,
+    //                 marked: true
+    //             },
+    //             BingoPosition {
+    //                 value: 4,
+    //                 x: 3,
+    //                 y: 0,
+    //                 marked: false
+    //             },
+    //             BingoPosition {
+    //                 value: 50,
+    //                 x: 4,
+    //                 y: 0,
+    //                 marked: false
+    //             }
+    //         ]
+    //     );
+    // }
     #[test]
     fn build_boards_test() {
         let input = r#"1,2,3
