@@ -1,4 +1,4 @@
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 struct PartNumber {
     x1: i32,
     x2: i32,
@@ -17,6 +17,7 @@ impl PartNumber {
 struct Symbol {
     x: i32,
     y: usize,
+    value: char,
 }
 
 fn parse_numbers(line: &String, y: usize) -> Vec<PartNumber> {
@@ -50,7 +51,6 @@ fn parse_numbers(line: &String, y: usize) -> Vec<PartNumber> {
         }
     }
     if is_building {
-        is_building = false;
         part_numbers.push(PartNumber {
             x1: start_index,
             x2: (line.len() as i32) - 1,
@@ -58,7 +58,6 @@ fn parse_numbers(line: &String, y: usize) -> Vec<PartNumber> {
             value,
             valid: false,
         });
-        value = 0;
     }
 
     part_numbers
@@ -70,12 +69,16 @@ fn parse_symbols(line: &String, y: usize) -> Vec<Symbol> {
         .filter_map(|(idx, char)| match char {
             '0'..='9' => None,
             '.' => None,
-            _ => Some(Symbol { x: idx as i32, y }),
+            _ => Some(Symbol {
+                x: idx as i32,
+                y,
+                value: char,
+            }),
         })
         .collect()
 }
 
-fn validate_row(row: &Vec<PartNumber>, symbol: &Symbol, y: usize) -> Vec<PartNumber> {
+fn validate_row(row: &Vec<PartNumber>, symbol: &Symbol, _y: usize) -> Vec<PartNumber> {
     let valid: Vec<PartNumber> = row
         .iter()
         .map(|part_number| {
@@ -98,10 +101,6 @@ fn validate_part_number(part_number: &PartNumber, symbol: &Symbol) -> bool {
     let is_valid = part_number.x1 - 1 <= symbol.x && symbol.x <= part_number.x2 + 1;
     // println!("is_valid {} {:?} {:?}", is_valid, part_number, symbol);
     is_valid
-}
-
-fn parse_line2(_line: &String) -> u32 {
-    0
 }
 
 pub fn part_1(input: &Vec<String>) -> i32 {
@@ -141,7 +140,7 @@ pub fn part_1(input: &Vec<String>) -> i32 {
                 .collect()
         })
         .enumerate()
-        .map(|(idx, pns)| {
+        .map(|(_idx, pns)| {
             // println!("Valid at line {}: {:?}", idx + 1, pns);
             pns
         })
@@ -156,11 +155,64 @@ pub fn part_1(input: &Vec<String>) -> i32 {
     })
 }
 
-pub fn part_2(_input: &Vec<String>) -> i32 {
-    0
-    // let sum: u32 = input.iter().map(|line| parse_line2(line)).sum();
+pub fn part_2(input: &Vec<String>) -> i32 {
+    let part_numbers: Vec<Vec<PartNumber>> = input
+        .iter()
+        .enumerate()
+        .map(|(y, line)| parse_numbers(line, y))
+        .collect();
+    let symbols: Vec<Vec<Symbol>> = input
+        .iter()
+        .enumerate()
+        .map(|(y, line)| parse_symbols(line, y))
+        .collect();
 
-    // sum as i32
+    let mut gear_ratios = 0;
+    for (y, line) in symbols.iter().enumerate() {
+        for symbol in line {
+            if symbol.value != '*' {
+                continue;
+            }
+
+            let mut possible_parts: Vec<PartNumber> = vec![];
+
+            if y > 0 {
+                // println!("Testing {:?} symbol above {}", symbol, y - 1);
+                let valid: Vec<_> = part_numbers[y - 1]
+                    .iter()
+                    .filter(|pn| validate_part_number(pn, symbol))
+                    .map(|pn| *pn)
+                    .collect();
+                possible_parts.extend(valid);
+            }
+            // println!("Testing {:?} symbol at {}", symbol, y);
+            let valid: Vec<_> = part_numbers[y]
+                .iter()
+                .filter(|pn| validate_part_number(pn, symbol))
+                .map(|pn| *pn)
+                .collect();
+            possible_parts.extend(valid);
+
+            if y + 1 < input.len() {
+                let valid: Vec<_> = part_numbers[y + 1]
+                    .iter()
+                    .filter(|pn| validate_part_number(pn, symbol))
+                    .map(|pn| *pn)
+                    .collect();
+                possible_parts.extend(valid);
+            }
+
+            // println!(
+            //     "Possible parts for symbol {:?}: {:?}",
+            //     symbol, possible_parts
+            // );
+            if possible_parts.len() == 2 {
+                gear_ratios += possible_parts[0].value * possible_parts[1].value
+            }
+        }
+    }
+
+    gear_ratios as i32
 }
 
 #[cfg(test)]
@@ -264,7 +316,14 @@ mod tests {
     fn parse_symbols_test() {
         let input = String::from("123...456..90$");
 
-        assert_eq!(parse_symbols(&input, 1), vec![Symbol { x: 13, y: 1 }])
+        assert_eq!(
+            parse_symbols(&input, 1),
+            vec![Symbol {
+                x: 13,
+                y: 1,
+                value: '$'
+            }]
+        )
     }
 
     #[test]
@@ -292,7 +351,11 @@ mod tests {
                 valid: false,
             },
         ];
-        let symbol = Symbol { x: 1, y: 0 };
+        let symbol = Symbol {
+            x: 1,
+            y: 0,
+            value: 'a',
+        };
 
         assert_eq!(
             validate_row(&input, &symbol, 1),
@@ -322,17 +385,20 @@ mod tests {
         )
     }
 
-    //     #[test]
-    //     fn part_2_test() {
-    //         let input = r#"two1nine
-    // eightwothree
-    // abcone2threexyz
-    // xtwone3four
-    // 4nineeightseven2
-    // zoneight234
-    // 7pqrstsixteen"#;
+    #[test]
+    fn part_2_test() {
+        let input = r#"467..114..
+            ...*......
+            ..35..633.
+            ......#...
+            617*......
+            .....+.58.
+            ..592.....
+            ......755.
+            ...$.*....
+            .664.598.."#;
 
-    //         let lines: Vec<String> = input.lines().map(|l| l.trim().to_string()).collect();
-    //         assert_eq!(part_2(&lines), 281)
-    //     }
+        let lines: Vec<String> = input.lines().map(|l| l.trim().to_string()).collect();
+        assert_eq!(part_2(&lines), 467835)
+    }
 }
