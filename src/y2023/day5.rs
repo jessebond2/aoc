@@ -1,113 +1,10 @@
-use std::cmp;
-use std::collections::{HashMap, HashSet};
-
-#[derive(Debug, PartialEq, Clone)]
-pub struct ScratchCard {
-    winning_numbers: HashSet<i32>,
-    numbers: HashSet<i32>,
-    matched: u32,
-    id: u32,
-}
-
-impl ScratchCard {
-    fn new(line: &str) -> Self {
-        let mut pieces = line.split(":");
-        let id: u32 = pieces
-            .next()
-            .unwrap()
-            .split(" ")
-            .last()
-            .unwrap()
-            .parse()
-            .expect("Should have id");
-        let pieces = pieces
-            .next()
-            .unwrap()
-            .split("|")
-            .map(|str| str.trim())
-            .collect::<Vec<&str>>();
-        let raw_winning_numbers = pieces[0];
-        let raw_numbers = pieces[1];
-
-        let mut winning_numbers = HashSet::new();
-        let mut numbers = HashSet::new();
-        let mut matched = 0;
-
-        for raw_number in raw_winning_numbers.trim().split(" ") {
-            let res = match raw_number.trim().parse::<i32>() {
-                Ok(number) => number,
-                Err(_) => continue,
-            };
-            winning_numbers.insert(res);
-        }
-        for raw_number in raw_numbers.trim().split(" ") {
-            let res = match raw_number.trim().parse::<i32>() {
-                Ok(number) => number,
-                Err(_) => continue,
-            };
-            numbers.insert(res);
-            if winning_numbers.contains(&res) {
-                matched += 1;
-            }
-        }
-
-        ScratchCard {
-            winning_numbers,
-            numbers,
-            matched,
-            id,
-        }
-    }
-
-    fn score(self) -> u32 {
-        if self.matched == 0 {
-            return 0;
-        }
-
-        u32::pow(2, self.matched - 1)
-    }
-
-    fn winnings(self, max: u32) -> Vec<u32> {
-        let start = self.id + 1;
-        (start..cmp::min(start + self.matched, max + 1)).collect()
-    }
-}
 
 pub fn part_1(input: &Vec<String>) -> u32 {
-    input
-        .iter()
-        .map(|line| ScratchCard::new(line).score())
-        .sum()
+    0
 }
 
 pub fn part_2(input: &Vec<String>) -> u32 {
-    let scratch_cards: Vec<_> = input.iter().map(|line| ScratchCard::new(line)).collect();
-    let scrath_card_ids: Vec<_> = scratch_cards.iter().map(|sc| sc.id).collect();
-    let mut scratch_winnings: HashMap<u32, Vec<u32>> = HashMap::new();
-    scratch_cards.iter().for_each(|sc| {
-        scratch_winnings.insert(
-            sc.id,
-            sc.clone()
-                .winnings(u32::try_from(input.len()).unwrap() - 1 + 999),
-        );
-    });
-
-    let mut memo: HashMap<u32, u32> = HashMap::new();
-    let max = scratch_cards.last().expect("It exists").id;
-
-    for sc in scratch_cards.iter().rev() {
-        let winnings = sc.clone().winnings(max);
-        let score: u32 = winnings
-            .iter()
-            .map(|x| memo.get(x).expect("hmm missing"))
-            .sum();
-        memo.insert(sc.id, score + 1);
-    }
-
-    scrath_card_ids
-        .iter()
-        .map(|id| memo.get(id).unwrap_or(&0))
-        .sum()
+0
 }
 
 #[cfg(test)]
@@ -204,8 +101,8 @@ mod tests {
         humidity-to-location map:
         60 56 37
         56 93 4";
-        
+
         let lines: Vec<String> = input.lines().map(|l| l.trim().to_string()).collect();
-        assert_eq!(part_2(&lines), 30)
+        assert_eq!(part_2(&lines), 35)
     }
 }
