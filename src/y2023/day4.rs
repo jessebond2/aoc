@@ -1,5 +1,5 @@
 use std::cmp;
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap, HashSet};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct ScratchCard {
@@ -80,31 +80,9 @@ pub fn part_1(input: &Vec<String>) -> u32 {
         .sum()
 }
 
-// pub fn get_scores(
-//     sc: &ScratchCard,
-//     scratch_cards: &Vec<ScratchCard>,
-//     mut counts: HashMap<u32, u32>,
-// ) -> u32 {
-//     if let Some(score) = counts.get(&sc.id) {
-//         return *score;
-//     }
-
-//     let score: u32 = sc
-//         .clone()
-//         .winnings(99999)
-//         .iter()
-//         .map(|w| get_scores(&scratch_cards[*w as usize], scratch_cards, counts))
-//         .sum::<u32>();
-
-//     counts.entry(sc.id).or_insert(0);
-
-//     score
-// }
-
 pub fn part_2(input: &Vec<String>) -> u32 {
     let scratch_cards: Vec<_> = input.iter().map(|line| ScratchCard::new(line)).collect();
     let scrath_card_ids: Vec<_> = scratch_cards.iter().map(|sc| sc.id).collect();
-    let mut scratch_counts: HashMap<u32, u32> = HashMap::new();
     let mut scratch_winnings: HashMap<u32, Vec<u32>> = HashMap::new();
     scratch_cards.iter().for_each(|sc| {
         scratch_winnings.insert(
@@ -119,7 +97,7 @@ pub fn part_2(input: &Vec<String>) -> u32 {
 
     for sc in scratch_cards.iter().rev() {
         let winnings = sc.clone().winnings(max);
-        let score: u32 =winnings
+        let score: u32 = winnings
             .iter()
             .map(|x| memo.get(x).expect("hmm missing"))
             .sum();
@@ -130,33 +108,6 @@ pub fn part_2(input: &Vec<String>) -> u32 {
         .iter()
         .map(|id| memo.get(id).unwrap_or(&0))
         .sum()
-
-    // let mut queue = VecDeque::from(scrath_card_ids);
-    // loop {
-    //     let id = queue.pop_front();
-    //     if let Some(id) = id {
-    //         *scratch_counts.entry(id).or_insert(0) += 1;
-
-    //         let _winnings = scratch_winnings
-    //             .get(&id)
-    //             .unwrap()
-    //             .iter()
-    //             .for_each(|winning_id| {
-    //                 queue.push_back(*winning_id);
-    //             });
-    //         // println!(
-    //         //     "Winnings for card {}: {:?}",
-    //         //     id,
-    //         //     scratch_winnings.get(&id).unwrap(),
-    //         // );
-    //         // println!("\tQueue: {:?}", queue);
-    //         // println!("\tCounts: {:?}", scratch_counts);
-    //     } else {
-    //         break;
-    //     }
-    // }
-
-    // scratch_counts.iter().map(|(_key, value)| value).sum()
 }
 
 #[cfg(test)]
