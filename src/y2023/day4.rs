@@ -114,32 +114,49 @@ pub fn part_2(input: &Vec<String>) -> u32 {
         );
     });
 
-    let mut queue = VecDeque::from(scrath_card_ids);
-    loop {
-        let id = queue.pop_front();
-        if let Some(id) = id {
-            *scratch_counts.entry(id).or_insert(0) += 1;
+    let mut memo: HashMap<u32, u32> = HashMap::new();
+    let max = scratch_cards.last().expect("It exists").id;
 
-            let _winnings = scratch_winnings
-                .get(&id)
-                .unwrap()
-                .iter()
-                .for_each(|winning_id| {
-                    queue.push_back(*winning_id);
-                });
-            // println!(
-            //     "Winnings for card {}: {:?}",
-            //     id,
-            //     scratch_winnings.get(&id).unwrap(),
-            // );
-            // println!("\tQueue: {:?}", queue);
-            // println!("\tCounts: {:?}", scratch_counts);
-        } else {
-            break;
-        }
+    for sc in scratch_cards.iter().rev() {
+        let winnings = sc.clone().winnings(max);
+        let score: u32 =winnings
+            .iter()
+            .map(|x| memo.get(x).expect("hmm missing"))
+            .sum();
+        memo.insert(sc.id, score + 1);
     }
 
-    scratch_counts.iter().map(|(_key, value)| value).sum()
+    scrath_card_ids
+        .iter()
+        .map(|id| memo.get(id).unwrap_or(&0))
+        .sum()
+
+    // let mut queue = VecDeque::from(scrath_card_ids);
+    // loop {
+    //     let id = queue.pop_front();
+    //     if let Some(id) = id {
+    //         *scratch_counts.entry(id).or_insert(0) += 1;
+
+    //         let _winnings = scratch_winnings
+    //             .get(&id)
+    //             .unwrap()
+    //             .iter()
+    //             .for_each(|winning_id| {
+    //                 queue.push_back(*winning_id);
+    //             });
+    //         // println!(
+    //         //     "Winnings for card {}: {:?}",
+    //         //     id,
+    //         //     scratch_winnings.get(&id).unwrap(),
+    //         // );
+    //         // println!("\tQueue: {:?}", queue);
+    //         // println!("\tCounts: {:?}", scratch_counts);
+    //     } else {
+    //         break;
+    //     }
+    // }
+
+    // scratch_counts.iter().map(|(_key, value)| value).sum()
 }
 
 #[cfg(test)]
