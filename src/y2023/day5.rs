@@ -1,4 +1,53 @@
 use std::cmp;
+use std::sync::mpsc;
+use std::thread;
+use std::time::Instant;
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Range {
+    start: u64,
+    end: u64,
+    size: u64,
+}
+
+impl Range {
+    fn new(start: u64, end: u64) -> Range {
+        Range {
+            start,
+            end,
+            size: end - start,
+        }
+    }
+
+    fn _split(self, index: u64) -> (Range, Range) {
+        (
+            Range {
+                start: self.start,
+                end: index,
+                size: index - self.start,
+            },
+            Range {
+                start: index + 1,
+                end: self.end,
+                size: self.end - (index + 1),
+            },
+        )
+    }
+}
+
+impl Iterator for Range {
+    type Item = u64;
+
+    fn next(&mut self) -> Option<u64> {
+        if self.start == self.end {
+            None
+        } else {
+            let result = Some(self.start);
+            self.start += 1;
+            result
+        }
+    }
+}
 
 #[derive(Debug, Clone, Copy)]
 pub struct Map {
@@ -89,8 +138,25 @@ pub fn build_mappers(mut iter: std::slice::Iter<'_, String>) -> Vec<Mapper> {
     mappers.into_iter().flatten().collect()
 }
 
+pub fn get_location(seed: u64, mappers: &Vec<Mapper>) -> u64 {
+    mappers.iter().fold(seed, |acc, val| val.convert(acc))
+}
+
+pub fn get_locations(seeds: Vec<u64>, mappers: Vec<Mapper>) -> Vec<u64> {
+    seeds
+        .iter()
+        .map(|seed| get_location(*seed, &mappers))
+        .collect()
+}
+
+pub fn smallest(locations: Vec<u64>) -> u64 {
+    locations
+        .iter()
+        .fold(locations[0], |acc, val| cmp::min(acc, *val))
+}
+
 pub fn part_1(input: &Vec<String>) -> u64 {
-    let mut iter: std::slice::Iter<'_, String> = input.iter();
+    let mut iter = input.iter();
     let seeds: Vec<_> = iter
         .next()
         .unwrap()
@@ -106,21 +172,79 @@ pub fn part_1(input: &Vec<String>) -> u64 {
     iter.next();
     let mappers = build_mappers(iter);
 
-    let locations: Vec<u64> = seeds
-        .iter()
-        .map(|seed| mappers.iter().fold(*seed, |acc, val| val.convert(acc)))
-        .collect();
+    let locations = get_locations(seeds, mappers);
     // println!("locations {:?}", locations);
-    let smallest = locations
-        .iter()
-        .fold(locations[0], |acc, val| cmp::min(acc, *val));
+    let smallest = smallest(locations);
 
     // println!("smallest location {}", smallest);
     smallest
 }
 
-pub fn part_2(_input: &Vec<String>) -> u64 {
-    0
+pub fn build_ranges(seed_ranges: Vec<u64>) -> Vec<Range> {
+    let mut ranges: Vec<Range> = vec![];
+    for i in (0..seed_ranges.len()).step_by(2) {
+        ranges.push(Range::new(
+            seed_ranges[i],
+            seed_ranges[i] + seed_ranges[i + 1],
+        ));
+    }
+    ranges
+}
+
+pub fn part_2(input: &Vec<String>) -> u64 {
+    let mut iter = input.iter();
+    let seed_ranges: Vec<_> = iter
+        .next()
+        .unwrap()
+        .split(":")
+        .last()
+        .unwrap()
+        .trim()
+        .split(" ")
+        .map(|n| n.parse::<u64>().unwrap_or(0))
+        .collect();
+
+    let ranges: Vec<Range> = build_ranges(seed_ranges);
+    println!("Ranges {:?}", ranges);
+    let mappers = build_mappers(iter);
+
+    let mut smallest_location: u64 = u64::MAX;
+    let total = ranges.iter().fold(0, |acc, val| acc + val.size);
+    let now = Instant::now();
+    println!("Starting computation of {} seeds", total);
+    let mut count: u64 = 0;
+
+    let (tx, rx) = mpsc::channel();
+    for range in ranges {
+        let tx = tx.clone();
+        let mappers = mappers.clone();
+
+        thread::spawn(move || {
+            for seed in range {
+                let location = get_location(seed, &mappers);
+                tx.send(location).unwrap();
+            }
+            drop(tx)
+        });
+    }
+    drop(tx);
+
+    for location in rx {
+        if count % 100000 == 0 {
+            println!(
+                "Elapsed time: {:?}, count: {}/{}, percentage: {:05.2}%, smallest_location: {}",
+                now.elapsed(),
+                count,
+                total,
+                count / total,
+                smallest_location
+            );
+        }
+        smallest_location = cmp::min(smallest_location, location);
+        count += 1;
+    }
+
+    smallest_location
 }
 
 #[cfg(test)]
@@ -432,5 +556,71 @@ mod tests {
 
         let lines: Vec<String> = input.lines().map(|l| l.trim().to_string()).collect();
         assert_eq!(part_1(&lines), 379811651)
+    }
+
+    #[test]
+    fn build_ranges_test() {
+        let input: Vec<u64> = vec![0, 5, 10, 10, 20, 20];
+
+        assert_eq!(
+            build_ranges(input),
+            vec![
+                Range {
+                    start: 0,
+                    end: 5,
+                    size: 5,
+                },
+                Range {
+                    start: 10,
+                    end: 20,
+                    size: 10,
+                },
+                Range {
+                    start: 20,
+                    end: 40,
+                    size: 20
+                }
+            ]
+        );
+    }
+
+    #[test]
+    fn part_2_test() {
+        let input = "seeds: 79 14 55 13
+
+        seed-to-soil map:
+        52 50 48
+        50 98 2
+        
+        soil-to-fertilizer map:
+        37 52 2
+        39 0 15
+        0 15 37
+        
+        fertilizer-to-water map:
+        0 11 42
+        49 53 8
+        42 0 7
+        57 7 4
+        
+        water-to-light map:
+        88 18 7
+        18 25 70
+        
+        light-to-temperature map:
+        45 77 23
+        81 45 19
+        68 64 13
+        
+        temperature-to-humidity map:
+        0 69 1
+        1 0 69
+        
+        humidity-to-location map:
+        60 56 37
+        56 93 4";
+
+        let lines: Vec<String> = input.lines().map(|l| l.trim().to_string()).collect();
+        assert_eq!(part_2(&lines), 46);
     }
 }
