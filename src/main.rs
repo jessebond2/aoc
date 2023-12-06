@@ -70,6 +70,15 @@ fn main() {
     let result_1 = crate::y2023::day5::part_1(&input);
     println!("Result from day5 part 1: {}", result_1);
 
-    let result_2 = crate::y2023::day5::part_2(&input);
+    // let result_2 = crate::y2023::day5::part_2(&input);
+    let result_2 = 0; // too slow
     println!("Result from day5 part 2: {}", result_2);
+
+    let input =
+        read_lines_to_vec("./input/2023/day6.txt").expect("Unable to parse file into integers");
+    let result_1 = crate::y2023::day6::part_1(&input);
+    println!("Result from day6 part 1: {}", result_1);
+
+    let result_2 = crate::y2023::day6::part_2(&input);
+    println!("Result from day6 part 2: {}", result_2);
 }
