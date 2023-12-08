@@ -83,10 +83,18 @@ fn main() {
     println!("Result from day6 part 2: {}", result_2);
 
     let input =
-    read_lines_to_vec("./input/2023/day7.txt").expect("Unable to parse file into integers");
-let result_1 = crate::y2023::day7::part_1(&input);
-println!("Result from day7 part 1: {}", result_1);
+        read_lines_to_vec("./input/2023/day7.txt").expect("Unable to parse file into integers");
+    let result_1 = crate::y2023::day7::part_1(&input);
+    println!("Result from day7 part 1: {}", result_1);
 
-let result_2 = crate::y2023::day7::part_2(&input);
-println!("Result from day7 part 2: {}", result_2);
+    let result_2 = crate::y2023::day7::part_2(&input);
+    println!("Result from day7 part 2: {}", result_2);
+
+    let input =
+        read_lines_to_vec("./input/2023/day8.txt").expect("Unable to parse file into integers");
+    let result_1 = crate::y2023::day8::part_1(&input);
+    println!("Result from day8 part 1: {}", result_1);
+
+    let result_2 = crate::y2023::day8::part_2(&input);
+    println!("Result from day8 part 2: {}", result_2);
 }
