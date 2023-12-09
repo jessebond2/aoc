@@ -41,10 +41,10 @@ fn gamma_and_epsilon_vecs(input: &Vec<String>, favor_gamma: bool) -> (Vec<i32>, 
     }
 
     for i in 0..len {
-        println!(
-            "idx {}, z count {}, o count {}",
-            i, zero_count_vec[i], one_count_vec[i]
-        );
+        // println!(
+        //     "idx {}, z count {}, o count {}",
+        //     i, zero_count_vec[i], one_count_vec[i]
+        // );
         if zero_count_vec[i] == one_count_vec[i] {
             if favor_gamma {
                 gamma_vec[i] = 1;
@@ -57,7 +57,7 @@ fn gamma_and_epsilon_vecs(input: &Vec<String>, favor_gamma: bool) -> (Vec<i32>, 
             epsilon_vec[i] = 1;
         }
     }
-    println!("gamma_vec {:?}, epsilon_vec {:?}", gamma_vec, epsilon_vec);
+    // println!("gamma_vec {:?}, epsilon_vec {:?}", gamma_vec, epsilon_vec);
     (gamma_vec, epsilon_vec)
 }
 

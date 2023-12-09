@@ -1,7 +1,7 @@
-fn next_in_sequence_helper(numbers: Vec<u32>) -> u32 {
-    let mut deltas: Vec<u32> = vec![];
+fn next_in_sequence_helper(numbers: Vec<i32>) -> i32 {
+    let mut deltas: Vec<i32> = vec![];
 
-    if numbers[0] == 0 && numbers[1] == 0 {
+    if numbers.iter().sum::<i32>() == 0 {
         return 0;
     }
 
@@ -12,20 +12,20 @@ fn next_in_sequence_helper(numbers: Vec<u32>) -> u32 {
     numbers[numbers.len() - 1] + next_in_sequence_helper(deltas)
 }
 
-fn next_in_sequence(line: &str) -> u32 {
-    let numbers: Vec<u32> = line
+fn next_in_sequence(line: &str) -> i32 {
+    let numbers: Vec<i32> = line
         .split(" ")
-        .map(|raw| raw.parse::<u32>().unwrap_or(0))
+        .map(|raw| raw.parse::<i32>().unwrap_or(0))
         .collect();
 
     next_in_sequence_helper(numbers)
 }
 
-pub fn part_1(input: &Vec<String>) -> u32 {
+pub fn part_1(input: &Vec<String>) -> i32 {
     input.iter().map(|line| next_in_sequence(line)).sum()
 }
 
-pub fn part_2(input: &Vec<String>) -> u32 {
+pub fn part_2(input: &Vec<String>) -> i32 {
     0
 }
 

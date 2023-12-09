@@ -163,7 +163,6 @@ pub fn part_2(input: &Vec<String>) -> u64 {
 
         for (idx, node) in current.clone().into_iter().enumerate() {
             if ends_in(current[idx].name, 'Z') {
-                // if !already_visited.contains(&idx) && ends_in(current[idx].name, 'Z') {
                 println!(
                     "Node {} name {} ends in Z, step {}, cloned {:?}, found_first {}",
                     idx, current[idx].name, step, last, found_first
