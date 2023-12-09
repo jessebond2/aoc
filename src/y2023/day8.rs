@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 use std::slice::Iter;
-use std::time::Instant;
 
 #[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Clone)]
 struct Node<'n, 'l, 'r> {
@@ -149,8 +148,6 @@ pub fn part_2(input: &Vec<String>) -> u64 {
     println!("loop_sizes positions: {:?}", loop_sizes);
 
     let mut step: u64 = 0;
-    let mut step_size: u64 = 1;
-    let now = Instant::now();
     let mut already_visited: Vec<(usize, u64)> = vec![];
 
     let mut found_first = false;
@@ -163,17 +160,15 @@ pub fn part_2(input: &Vec<String>) -> u64 {
 
         let last: Vec<_> = current.clone().iter().map(|node| node.name).collect();
         let mut next: Vec<&Node> = vec![];
-        let mut updated = false;
+
         for (idx, node) in current.clone().into_iter().enumerate() {
             if ends_in(current[idx].name, 'Z') {
                 // if !already_visited.contains(&idx) && ends_in(current[idx].name, 'Z') {
                 println!(
-                    "Node {} name {} ends in Z, step {}, step_size {}, cloned {:?}, found_first {}",
-                    idx, current[idx].name, step, step_size, last, found_first
+                    "Node {} name {} ends in Z, step {}, cloned {:?}, found_first {}",
+                    idx, current[idx].name, step, last, found_first
                 );
                 already_visited.push((idx, step));
-                // step_size *= loop_sizes[idx].1 as u64;
-                updated = true;
                 found_first = true;
             }
             let node = match movement {
@@ -184,29 +179,6 @@ pub fn part_2(input: &Vec<String>) -> u64 {
             if let Some(node) = node {
                 next.push(node);
             }
-
-            // else {
-            //     if !already_visited.contains(&idx) && ends_in(current[idx].name, 'Z') {
-            //         println!(
-            //             "Node {} name {} ends in Z, step {}, step_size {}, cloned {:?}, found_first {}",
-            //             idx, current[idx].name, step, step_size, last, found_first
-            //         );
-            //         already_visited.push(idx);
-            //         step_size *= loop_sizes[idx].1 as u64;
-            //         updated = true;
-            //     }
-            //     let node = match movement {
-            //         b'L' => map.get(&node.left.to_string()),
-            //         _ => map.get(&node.right.to_string()),
-            //     };
-            // }
-        }
-        if updated {
-            // println!(
-            //     "\tShould have {} end in Z {:?}",
-            //     already_visited.len(),
-            //     current.iter().map(|n| n.name).collect::<Vec<_>>()
-            // );
         }
         current = next;
         if already_visited.len() == 6 {
@@ -216,26 +188,6 @@ pub fn part_2(input: &Vec<String>) -> u64 {
         }
 
         step += 1;
-        if step % 100000 == 0 {
-            // println!("step {}, elapsed time {:?}", step, now.elapsed());
-        }
-
-        // for movement in moves.chars() {
-        //     if all_ends_in_z(&current) {
-        //         break 'outer;
-        //     }
-
-        //     for (idx, node) in current.clone().into_iter().enumerate() {
-        //         current[idx] = match movement {
-        //             'L' => &map.get(&node.left.to_string()).unwrap(),
-        //             _ => &map.get(&node.right.to_string()).unwrap(),
-        //         };
-        //     }
-        //     step += 1;
-        //     if step % 100000 == 0 {
-        //         println!("step {}, elapsed time {:?}", step, now.elapsed());
-        //     }
-        // }
     }
 
     step
