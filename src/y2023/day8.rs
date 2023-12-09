@@ -81,10 +81,15 @@ fn all_ends_in_z(vec: &Vec<&Node>) -> bool {
     vec.iter().fold(true, |acc, val| acc && val.ends_in_z)
 }
 
-fn loop_size(node: &Node, moves: &str, map: &HashMap<String, Node>) -> (u32, u32) {
+fn loop_size<'a>(
+    node: &Node,
+    moves: &str,
+    map: &HashMap<String, Node<'a, 'a, 'a>>,
+) -> (u32, u32, Vec<&'a str>) {
     let mut map = map.clone();
     let mut current = map.get(node.name).unwrap().clone();
     let mut step = 0;
+    let mut vec: Vec<&str> = vec![];
 
     'outer: loop {
         for movement in moves.chars() {
@@ -92,14 +97,17 @@ fn loop_size(node: &Node, moves: &str, map: &HashMap<String, Node>) -> (u32, u32
                 break 'outer;
             }
 
+            vec.push(current.name);
             current.visited = true;
             current.visited_step = Some(step);
+
             map.insert(current.name.to_string(), current.clone());
 
             current = match movement {
                 'L' => map.get(&current.left.to_string()).unwrap().clone(),
                 _ => map.get(&current.right.to_string()).unwrap().clone(),
             };
+
             step += 1;
         }
     }
@@ -107,13 +115,27 @@ fn loop_size(node: &Node, moves: &str, map: &HashMap<String, Node>) -> (u32, u32
     (
         current.visited_step.unwrap(),
         step - current.visited_step.unwrap(),
+        vec,
     )
 }
 
-pub fn part_2(input: &Vec<String>) -> u32 {
+pub fn greatest_common_divisor(a: u64, b: u64) -> u64 {
+    if b == 0 {
+        return a;
+    }
+    greatest_common_divisor(b, a % b)
+}
+
+pub fn lowest_common_multiple(a: u64, b: u64) -> u64 {
+    if a > b {
+        return (a / greatest_common_divisor(a, b)) * b;
+    }
+    (b / greatest_common_divisor(a, b)) * a
+}
+
+pub fn part_2(input: &Vec<String>) -> u64 {
     let mut iter = input.iter();
     let moves = (iter.next().unwrap()).clone();
-
     iter.next();
 
     let map = build_map(iter);
@@ -125,27 +147,95 @@ pub fn part_2(input: &Vec<String>) -> u32 {
         .collect();
     println!("starting positions: {:?}", current);
     println!("loop_sizes positions: {:?}", loop_sizes);
-    return 0;
-    let mut step: u32 = 0;
+
+    let mut step: u64 = 0;
+    let mut step_size: u64 = 1;
     let now = Instant::now();
+    let mut already_visited: Vec<(usize, u64)> = vec![];
 
+    let mut found_first = false;
     'outer: loop {
-        for movement in moves.chars() {
-            if all_ends_in_z(&current) {
-                break 'outer;
+        let movement = moves.as_bytes()[step as usize % moves.len()];
+
+        if all_ends_in_z(&current) {
+            break 'outer;
+        }
+
+        let last: Vec<_> = current.clone().iter().map(|node| node.name).collect();
+        let mut next: Vec<&Node> = vec![];
+        let mut updated = false;
+        for (idx, node) in current.clone().into_iter().enumerate() {
+            if ends_in(current[idx].name, 'Z') {
+                // if !already_visited.contains(&idx) && ends_in(current[idx].name, 'Z') {
+                println!(
+                    "Node {} name {} ends in Z, step {}, step_size {}, cloned {:?}, found_first {}",
+                    idx, current[idx].name, step, step_size, last, found_first
+                );
+                already_visited.push((idx, step));
+                // step_size *= loop_sizes[idx].1 as u64;
+                updated = true;
+                found_first = true;
+            }
+            let node = match movement {
+                b'L' => map.get(&node.left.to_string()),
+                _ => map.get(&node.right.to_string()),
+            };
+
+            if let Some(node) = node {
+                next.push(node);
             }
 
-            for (idx, node) in current.clone().into_iter().enumerate() {
-                current[idx] = match movement {
-                    'L' => &map.get(&node.left.to_string()).unwrap(),
-                    _ => &map.get(&node.right.to_string()).unwrap(),
-                };
-            }
-            step += 1;
-            if step % 100000 == 0 {
-                println!("step {}, elapsed time {:?}", step, now.elapsed());
-            }
+            // else {
+            //     if !already_visited.contains(&idx) && ends_in(current[idx].name, 'Z') {
+            //         println!(
+            //             "Node {} name {} ends in Z, step {}, step_size {}, cloned {:?}, found_first {}",
+            //             idx, current[idx].name, step, step_size, last, found_first
+            //         );
+            //         already_visited.push(idx);
+            //         step_size *= loop_sizes[idx].1 as u64;
+            //         updated = true;
+            //     }
+            //     let node = match movement {
+            //         b'L' => map.get(&node.left.to_string()),
+            //         _ => map.get(&node.right.to_string()),
+            //     };
+            // }
         }
+        if updated {
+            // println!(
+            //     "\tShould have {} end in Z {:?}",
+            //     already_visited.len(),
+            //     current.iter().map(|n| n.name).collect::<Vec<_>>()
+            // );
+        }
+        current = next;
+        if already_visited.len() == 6 {
+            return already_visited
+                .iter()
+                .fold(1, |acc, (_, step)| lowest_common_multiple(acc, *step));
+        }
+
+        step += 1;
+        if step % 100000 == 0 {
+            // println!("step {}, elapsed time {:?}", step, now.elapsed());
+        }
+
+        // for movement in moves.chars() {
+        //     if all_ends_in_z(&current) {
+        //         break 'outer;
+        //     }
+
+        //     for (idx, node) in current.clone().into_iter().enumerate() {
+        //         current[idx] = match movement {
+        //             'L' => &map.get(&node.left.to_string()).unwrap(),
+        //             _ => &map.get(&node.right.to_string()).unwrap(),
+        //         };
+        //     }
+        //     step += 1;
+        //     if step % 100000 == 0 {
+        //         println!("step {}, elapsed time {:?}", step, now.elapsed());
+        //     }
+        // }
     }
 
     step
@@ -226,9 +316,9 @@ mod tests {
         let node3 = map.get("12A").unwrap();
         let moves = "LR";
 
-        assert_eq!(loop_size(node3, moves, &map), (3 as u32, 2 as u32));
-        assert_eq!(loop_size(node1, moves, &map), (1 as u32, 2 as u32));
-        assert_eq!(loop_size(node2, moves, &map), (1 as u32, 3 as u32));
+        assert_eq!(loop_size(node3, moves, &map), (3 as u32, 2 as u32, vec![]),);
+        assert_eq!(loop_size(node1, moves, &map), (1 as u32, 2 as u32, vec![]));
+        assert_eq!(loop_size(node2, moves, &map), (1 as u32, 3 as u32, vec![]));
     }
 
     #[test]
