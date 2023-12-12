@@ -1,4 +1,4 @@
-use crate::utils::read_lines_to_vec;
+use crate::utils::{read_file_to_string, read_lines_to_vec};
 
 pub mod utils;
 pub mod y2021;
@@ -99,10 +99,18 @@ fn main() {
     println!("Result from day8 part 2: {}", result_2);
 
     let input =
-    read_lines_to_vec("./input/2023/day9.txt").expect("Unable to parse file into integers");
-let result_1 = crate::y2023::day9::part_1(&input);
-println!("Result from day9 part 1: {}", result_1);
+        read_lines_to_vec("./input/2023/day9.txt").expect("Unable to parse file into integers");
+    let result_1 = crate::y2023::day9::part_1(&input);
+    println!("Result from day9 part 1: {}", result_1);
 
-let result_2 = crate::y2023::day9::part_2(&input);
-println!("Result from day9 part 2: {}", result_2);
+    let result_2 = crate::y2023::day9::part_2(&input);
+    println!("Result from day9 part 2: {}", result_2);
+
+    let input =
+        read_file_to_string("./input/2023/day10.txt").expect("Unable to parse file into integers");
+    let result_1 = crate::y2023::day10::part_1(&input);
+    println!("Result from day10 part 1: {}", result_1);
+
+    let result_2 = crate::y2023::day10::part_2(&input);
+    println!("Result from day10 part 2: {}", result_2);
 }
