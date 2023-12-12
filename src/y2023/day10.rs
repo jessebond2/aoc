@@ -46,7 +46,7 @@ struct PipeGraph {
 }
 
 impl PipeGraph {
-    fn next_to_start(self) -> (i32, i32) {
+    fn next_to_start(&self) -> (i32, i32) {
         // left
         if let Some(node) = self.nodes.get(&(self.start.0 - 1, self.start.1)) {
             if node.pipe == Pipe::EW || node.pipe == Pipe::NE || node.pipe == Pipe::SE {
@@ -67,7 +67,7 @@ impl PipeGraph {
         (self.start.0, self.start.1 + 1)
     }
 
-    fn next_node(self, node: &PipeNode, visited: &HashSet<(i32, i32)>) -> Option<(i32, i32)> {
+    fn next_node(&self, node: &PipeNode, visited: &HashSet<(i32, i32)>) -> Option<(i32, i32)> {
         let nodes = match node.pipe {
             Pipe::NS => ((node.x, node.y - 1), (node.x, node.y + 1)),
             Pipe::EW => ((node.x - 1, node.y), (node.x + 1, node.y)),
@@ -128,7 +128,6 @@ pub fn part_1(input: &str) -> i32 {
     loop {
         visited.insert((current.x, current.y));
         let next = graph
-            .clone()
             .next_node(&current, &visited)
             .expect("Should have a next node");
 
