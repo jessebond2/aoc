@@ -43,6 +43,7 @@ impl PipeNode {
 struct PipeGraph {
     start: (i32, i32),
     nodes: HashMap<(i32, i32), PipeNode>,
+    empty_count: i32,
 }
 
 impl PipeGraph {
@@ -99,6 +100,7 @@ impl FromStr for PipeGraph {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut nodes: HashMap<(i32, i32), PipeNode> = HashMap::new();
         let mut start: (i32, i32) = (0, 0);
+        let mut empty_count = 0;
 
         for (y, line) in s.lines().enumerate() {
             for (x, char) in line.trim().chars().enumerate() {
@@ -106,11 +108,18 @@ impl FromStr for PipeGraph {
                 if node.pipe == Pipe::S {
                     start = (x as i32, y as i32);
                 }
+                if node.pipe == Pipe::X {
+                    empty_count += 1;
+                }
                 nodes.insert((node.x, node.y), node);
             }
         }
 
-        Ok(PipeGraph { start, nodes })
+        Ok(PipeGraph {
+            start,
+            nodes,
+            empty_count,
+        })
     }
 }
 
@@ -137,6 +146,14 @@ pub fn part_1(input: &str) -> i32 {
             break;
         }
     }
+
+    println!(
+        "Visited {}, empty_count {}, total nodes {}, visited + empty_count {}",
+        visited.len(),
+        graph.empty_count,
+        graph.nodes.len(),
+        visited.len() as i32 + graph.empty_count,
+    );
 
     visited.len() as i32 / 2
 }
