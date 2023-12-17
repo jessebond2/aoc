@@ -113,4 +113,12 @@ fn main() {
 
     let result_2 = crate::y2023::day10::part_2(&input);
     println!("Result from day10 part 2: {}", result_2);
+
+    let input =
+        read_file_to_string("./input/2023/day11.txt").expect("Unable to parse file into integers");
+    let result_1 = crate::y2023::day11::part_1(&input);
+    println!("Result from day11 part 1: {}", result_1);
+
+    let result_2 = crate::y2023::day11::part_2(&input);
+    println!("Result from day11 part 2: {}", result_2);
 }
