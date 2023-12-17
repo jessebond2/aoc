@@ -9,8 +9,8 @@ struct Star {
 impl Star {
     fn expand(&self, x_factors: &Vec<u32>, y_factors: &Vec<u32>, factor: u32) -> Star {
         Star {
-            x: &self.x + (factor * x_factors[self.x]) as usize,
-            y: &self.y + (factor * y_factors[self.y]) as usize,
+            x: &self.x + ((factor - 1) * x_factors[self.x]) as usize,
+            y: &self.y + ((factor - 1) * y_factors[self.y]) as usize,
         }
     }
 
@@ -31,7 +31,7 @@ impl Star {
 }
 
 pub fn part_1(input: &str) -> usize {
-    parse_and_expand(input, 1)
+    parse_and_expand(input, 2)
 }
 
 pub fn parse_and_expand(input: &str, expansion_factor: u32) -> usize {
@@ -75,13 +75,16 @@ pub fn parse_and_expand(input: &str, expansion_factor: u32) -> usize {
         .collect();
 
     let mut count = 0;
-    for star in &expanded_stars {
-        for star2 in &expanded_stars {
+    for n in 0..expanded_stars.len() - 1 {
+        let star = expanded_stars[n];
+        for m in n + 1..expanded_stars.len() {
+            let star2 = expanded_stars[m];
+
             count += star.distance(&star2);
         }
     }
 
-    count / 2
+    count
 }
 
 pub fn part_2(input: &str) -> usize {
@@ -112,6 +115,12 @@ mod tests {
     fn star_distance() {
         assert_eq!(Star { x: 0, y: 0 }.distance(&Star { x: 10, y: 20 }), 30);
         assert_eq!(Star { x: 5, y: 5 }.distance(&Star { x: 0, y: 0 }), 10);
+        assert_eq!(Star { x: 103, y: 0 }.distance(&Star { x: 207, y: 1 }), 105);
+        assert_eq!(
+            Star { x: 103, y: 0 }.distance(&Star { x: 206, y: 104 }),
+            207
+        );
+        assert_eq!(Star { x: 207, y: 1 }.distance(&Star { x: 0, y: 209 }), 415);
     }
 
     #[test]
@@ -134,6 +143,10 @@ mod tests {
         assert_eq!(
             Star { x: 4, y: 4 }.expand(&x_expansion, &y_expansion, 2),
             Star { x: 12, y: 12 }
+        );
+        assert_eq!(
+            Star { x: 4, y: 4 }.expand(&x_expansion, &y_expansion, 10),
+            Star { x: 44, y: 44 }
         );
     }
 
