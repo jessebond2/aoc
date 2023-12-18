@@ -33,7 +33,7 @@ struct SpringGroup {
 
 impl SpringGroup {
     fn from_str2(s: &str) -> SpringGroup {
-        let base = SpringGroup::from_str(&s).expect("Expected parsing");
+        let base = SpringGroup::from_str(s).expect("Expected parsing");
         let mut springs: Vec<Part> = vec![];
         let mut segments: Vec<u32> = vec![];
         for i in 0..5 {
@@ -52,45 +52,40 @@ impl SpringGroup {
 
         let mut stack: Vec<Vec<Part>> = vec![self.springs.clone()];
 
-        loop {
-            match stack.pop() {
-                Some(possibility) => {
-                    if !SpringGroup::is_valid_springs(&self, &possibility) {
-                        continue;
+        while let Some(possibility) = stack.pop() {
+            if !SpringGroup::is_valid_springs(self, &possibility) {
+                continue;
+            }
+
+            for i in 0..possibility.len() {
+                let part = &possibility[i];
+
+                match *part {
+                    Part::Unknown => {
+                        let mut good = possibility.clone();
+                        good[i] = Part::Good;
+                        stack.push(good);
+                        let mut damaged = possibility.clone();
+                        damaged[i] = Part::Damaged;
+                        stack.push(damaged);
+                        break;
                     }
-
-                    for i in 0..possibility.len() {
-                        let part = &possibility[i];
-
-                        match *part {
-                            Part::Unknown => {
-                                let mut good = possibility.clone();
-                                good[i] = Part::Good;
-                                stack.push(good);
-                                let mut damaged = possibility.clone();
-                                damaged[i] = Part::Damaged;
-                                stack.push(damaged);
-                                break;
-                            }
-                            _ => {
-                                if i == possibility.len() - 1
-                                    && SpringGroup::is_valid_springs(&self, &possibility)
-                                {
-                                    // println!("Possibilitiy: {:?}", possibility);
-                                    possibilities.push(possibility.clone());
-                                }
-                            }
+                    _ => {
+                        if i == possibility.len() - 1
+                            && SpringGroup::is_valid_springs(self, &possibility)
+                        {
+                            // println!("Possibilitiy: {:?}", possibility);
+                            possibilities.push(possibility.clone());
                         }
                     }
                 }
-                None => break,
             }
         }
 
         possibilities.len()
     }
 
-    fn is_valid(&self) -> bool {
+    fn _is_valid(&self) -> bool {
         self.is_valid_springs(&self.springs)
     }
 
@@ -101,8 +96,7 @@ impl SpringGroup {
         let mut current_len = 0;
         let mut building = false;
 
-        for i in 0..springs.len() {
-            let part = &springs[i];
+        for part in springs {
             match *part {
                 Part::Unknown => return true,
                 Part::Good => {
@@ -152,13 +146,10 @@ impl FromStr for SpringGroup {
             .next()
             .unwrap()
             .chars()
-            .map(|char| {
-                let part = match char {
-                    '.' => Part::Good,
-                    '#' => Part::Damaged,
-                    _ => Part::Unknown,
-                };
-                part
+            .map(|char| match char {
+                '.' => Part::Good,
+                '#' => Part::Damaged,
+                _ => Part::Unknown,
             })
             .collect();
         let segments: Vec<u32> = iter
@@ -233,45 +224,24 @@ mod tests {
 
     #[test]
     fn is_valid() {
-        assert_eq!(
-            SpringGroup::from_str(&".###.##..... 3,2,1")
-                .unwrap()
-                .is_valid(),
-            false
-        );
-        assert_eq!(
-            SpringGroup::from_str(&"####???????? 3,2,1")
-                .unwrap()
-                .is_valid(),
-            false
-        );
+        assert!(!SpringGroup::from_str(".###.##..... 3,2,1")
+            .unwrap()
+            ._is_valid());
+        assert!(!SpringGroup::from_str("####???????? 3,2,1")
+            .unwrap()
+            ._is_valid());
 
-        assert_eq!(
-            SpringGroup::from_str(&"#.#.### 1,1,3").unwrap().is_valid(),
-            true
-        );
-        assert_eq!(
-            SpringGroup::from_str(&".###.##.#... 3,2,1")
-                .unwrap()
-                .is_valid(),
-            true
-        );
-        assert_eq!(
-            SpringGroup::from_str(&"#.##.##.#... 3,2,1")
-                .unwrap()
-                .is_valid(),
-            false
-        );
-        assert_eq!(
-            SpringGroup::from_str(&"...### 2,1").unwrap().is_valid(),
-            false
-        );
-        assert_eq!(SpringGroup::from_str(&"...### 3").unwrap().is_valid(), true);
-        assert_eq!(SpringGroup::from_str(&"?..### 3").unwrap().is_valid(), true);
-        assert_eq!(
-            SpringGroup::from_str(&"##.##? 3").unwrap().is_valid(),
-            false
-        );
+        assert!(SpringGroup::from_str("#.#.### 1,1,3").unwrap()._is_valid());
+        assert!(SpringGroup::from_str(".###.##.#... 3,2,1")
+            .unwrap()
+            ._is_valid());
+        assert!(!SpringGroup::from_str("#.##.##.#... 3,2,1")
+            .unwrap()
+            ._is_valid(),);
+        assert!(!SpringGroup::from_str("...### 2,1").unwrap()._is_valid(),);
+        assert!(SpringGroup::from_str("...### 3").unwrap()._is_valid());
+        assert!(SpringGroup::from_str("?..### 3").unwrap()._is_valid());
+        assert!(!SpringGroup::from_str("##.##? 3").unwrap()._is_valid());
     }
 
     #[test]
@@ -300,23 +270,23 @@ mod tests {
         let input = ".# 1";
 
         assert_eq!(
-            SpringGroup::from_str2(&input),
-            SpringGroup::from_str(&".#?.#?.#?.#?.# 1,1,1,1,1").unwrap()
+            SpringGroup::from_str2(input),
+            SpringGroup::from_str(".#?.#?.#?.#?.# 1,1,1,1,1").unwrap()
         );
 
         assert_eq!(
             SpringGroup::from_str(
-                &"???.###????.###????.###????.###????.### 1,1,3,1,1,3,1,1,3,1,1,3,1,1,3"
+                "???.###????.###????.###????.###????.### 1,1,3,1,1,3,1,1,3,1,1,3,1,1,3"
             )
             .unwrap(),
-            SpringGroup::from_str2(&"???.### 1,1,3")
+            SpringGroup::from_str2("???.### 1,1,3")
         );
     }
 
     #[test]
     fn get_possibilities() {
         assert_eq!(
-            SpringGroup::from_str(&"?###???????? 3,2,1")
+            SpringGroup::from_str("?###???????? 3,2,1")
                 .unwrap()
                 .get_possibilities(),
             10
@@ -326,7 +296,7 @@ mod tests {
     #[test]
     fn get_possibilities2() {
         assert_eq!(
-            SpringGroup::from_str2(&"???.### 1,1,3").get_possibilities(),
+            SpringGroup::from_str2("???.### 1,1,3").get_possibilities(),
             1
         );
     }
@@ -340,6 +310,6 @@ mod tests {
         ????.######..#####. 1,6,5
         ?###???????? 3,2,1";
 
-        assert_eq!(part_2(&input), 525152);
+        assert_eq!(part_2(input), 525152);
     }
 }
