@@ -25,6 +25,17 @@ impl Display for Part {
     }
 }
 
+#[derive(Clone, Copy)]
+struct SpringValidation {
+    valid: bool,
+    segment_index: usize,
+    completed_segments: u32,
+    current_len: u32,
+    building: bool,
+    part_index: usize,
+    done: bool,
+}
+
 #[derive(Debug, PartialEq)]
 struct SpringGroup {
     springs: Vec<Part>,
@@ -50,35 +61,31 @@ impl SpringGroup {
     fn get_possibilities(&self) -> usize {
         let mut possibilities: Vec<Vec<Part>> = vec![];
 
-        let mut stack: Vec<Vec<Part>> = vec![self.springs.clone()];
+        let mut stack: Vec<(Option<SpringValidation>, Vec<Part>)> =
+            vec![(None, self.springs.clone())];
 
-        while let Some(possibility) = stack.pop() {
-            if !SpringGroup::is_valid_springs(self, &possibility) {
+        while let Some((validation, possibility)) = stack.pop() {
+            let updated_validation = SpringGroup::is_valid_springs(self, &possibility, validation);
+            if !updated_validation.valid {
                 continue;
             }
 
-            for i in 0..possibility.len() {
+            for i in updated_validation.part_index..possibility.len() {
                 let part = &possibility[i];
 
-                match *part {
-                    Part::Unknown => {
-                        let mut good = possibility.clone();
-                        good[i] = Part::Good;
-                        stack.push(good);
-                        let mut damaged = possibility.clone();
-                        damaged[i] = Part::Damaged;
-                        stack.push(damaged);
-                        break;
-                    }
-                    _ => {
-                        if i == possibility.len() - 1
-                            && SpringGroup::is_valid_springs(self, &possibility)
-                        {
-                            // println!("Possibilitiy: {:?}", possibility);
-                            possibilities.push(possibility.clone());
-                        }
-                    }
+                if *part == Part::Unknown {
+                    let mut good = possibility.clone();
+                    good[i] = Part::Good;
+                    stack.push((Some(updated_validation), good));
+                    let mut damaged = possibility.clone();
+                    damaged[i] = Part::Damaged;
+                    stack.push((Some(updated_validation), damaged));
+                    break;
                 }
+            }
+            if updated_validation.done {
+                // println!("Possibilitiy: {:?}", possibility);
+                possibilities.push(possibility.clone());
             }
         }
 
@@ -86,51 +93,72 @@ impl SpringGroup {
     }
 
     fn _is_valid(&self) -> bool {
-        self.is_valid_springs(&self.springs)
+        self.is_valid_springs(&self.springs, None).valid
     }
 
-    fn is_valid_springs(&self, springs: &Vec<Part>) -> bool {
+    fn is_valid_springs(
+        &self,
+        springs: &[Part],
+        validation: Option<SpringValidation>,
+    ) -> SpringValidation {
         let mut segment_iter = self.segments.iter();
-        let mut segment = segment_iter.next().unwrap();
-        let mut completed_segments = 0;
-        let mut current_len = 0;
-        let mut building = false;
+        let mut validation = match validation {
+            Some(validation) => validation,
+            None => SpringValidation {
+                valid: false,
+                segment_index: 0,
+                completed_segments: 0,
+                current_len: 0,
+                building: false,
+                part_index: 0,
+                done: false,
+            },
+        };
+        validation.valid = false;
+        let mut segment = segment_iter.nth(validation.segment_index).unwrap_or(&0);
 
-        for part in springs {
+        for part in springs.iter().skip(validation.part_index) {
             match *part {
-                Part::Unknown => return true,
+                Part::Unknown => {
+                    validation.valid = true;
+                    return validation;
+                }
                 Part::Good => {
-                    if building {
-                        building = false;
-                        if current_len == *segment {
+                    if validation.building {
+                        validation.building = false;
+                        if validation.current_len == *segment {
                             segment = segment_iter.next().unwrap_or(&0);
-                            current_len = 0;
-                            completed_segments += 1;
+                            validation.segment_index += 1;
+                            validation.current_len = 0;
+                            validation.completed_segments += 1;
                         } else {
-                            return false;
+                            return validation;
                         }
                     }
                 }
                 _ => {
-                    if current_len == *segment {
-                        return false;
+                    if validation.current_len == *segment {
+                        return validation;
                     }
-                    building = true;
-                    current_len += 1;
+                    validation.building = true;
+                    validation.current_len += 1;
                 }
             }
+            validation.part_index += 1;
         }
-        if building {
-            if current_len != *segment {
-                return false;
+        if validation.building {
+            if validation.current_len != *segment {
+                return validation;
             }
-            completed_segments += 1;
+            validation.completed_segments += 1;
         }
-        if completed_segments != self.segments.len() {
-            return false;
+        if validation.completed_segments as usize != self.segments.len() {
+            return validation;
         }
 
-        true
+        validation.valid = true;
+        validation.done = true;
+        validation
     }
 }
 
@@ -249,7 +277,7 @@ mod tests {
         let input = "#.#.### 1,1,3";
 
         assert_eq!(
-            SpringGroup::from_str(&input).unwrap(),
+            SpringGroup::from_str(input).unwrap(),
             SpringGroup {
                 springs: vec![
                     Part::Damaged,
