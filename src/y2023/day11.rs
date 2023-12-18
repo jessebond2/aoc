@@ -7,10 +7,10 @@ struct Star {
 }
 
 impl Star {
-    fn expand(&self, x_factors: &Vec<u32>, y_factors: &Vec<u32>, factor: u32) -> Star {
+    fn expand(&self, x_factors: &[u32], y_factors: &[u32], factor: u32) -> Star {
         Star {
-            x: &self.x + ((factor - 1) * x_factors[self.x]) as usize,
-            y: &self.y + ((factor - 1) * y_factors[self.y]) as usize,
+            x: self.x + ((factor - 1) * x_factors[self.x]) as usize,
+            y: self.y + ((factor - 1) * y_factors[self.y]) as usize,
         }
     }
 
@@ -77,10 +77,8 @@ pub fn parse_and_expand(input: &str, expansion_factor: u32) -> usize {
     let mut count = 0;
     for n in 0..expanded_stars.len() - 1 {
         let star = expanded_stars[n];
-        for m in n + 1..expanded_stars.len() {
-            let star2 = expanded_stars[m];
-
-            count += star.distance(&star2);
+        for star2 in expanded_stars.iter().skip(n + 1) {
+            count += star.distance(star2);
         }
     }
 
