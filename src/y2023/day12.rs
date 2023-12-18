@@ -1,8 +1,12 @@
 use core::fmt;
+use std::sync::mpsc::channel;
+use std::time::Instant;
 use std::{
     fmt::{Display, Formatter},
     str::FromStr,
 };
+use workerpool::thunk::{Thunk, ThunkWorker};
+use workerpool::Pool;
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 enum Part {
@@ -180,10 +184,35 @@ pub fn part_1(input: &str) -> usize {
 }
 
 pub fn part_2(input: &str) -> usize {
-    input
-        .lines()
-        .map(|line| SpringGroup::from_str2(line).get_possibilities())
-        .sum()
+    let now = Instant::now();
+    let lines: Vec<_> = input.lines().collect();
+    let n_jobs = lines.len();
+    let n_workers = 16;
+    let pool = Pool::<ThunkWorker<usize>>::new(n_workers);
+
+    let (tx, rx) = channel();
+    for line in input.lines() {
+        let string = String::from(line);
+        pool.execute_to(
+            tx.clone(),
+            Thunk::of(move || SpringGroup::from_str2(&string).get_possibilities()),
+        );
+    }
+
+    let mut job_count = 0;
+    let mut sum = 0;
+    for result in rx.iter().take(n_jobs) {
+        job_count += 1;
+        println!(
+            "Elapsed time: {:?}, count: {} of {}, sum {}",
+            now.elapsed(),
+            job_count,
+            n_jobs,
+            sum
+        );
+        sum += result;
+    }
+    sum
 }
 
 #[cfg(test)]

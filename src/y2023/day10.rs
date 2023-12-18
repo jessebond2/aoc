@@ -158,7 +158,7 @@ pub fn part_1(input: &str) -> i32 {
     visited.len() as i32 / 2
 }
 
-pub fn part_2(input: &str) -> i32 {
+pub fn part_2(_input: &str) -> i32 {
     0
 }
 
