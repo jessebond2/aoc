@@ -36,6 +36,20 @@ struct SpringValidation {
     done: bool,
 }
 
+impl SpringValidation {
+    fn new() -> Self {
+        Self {
+            valid: false,
+            segment_index: 0,
+            completed_segments: 0,
+            current_len: 0,
+            building: false,
+            part_index: 0,
+            done: false,
+        }
+    }
+}
+
 #[derive(Debug, PartialEq)]
 struct SpringGroup {
     springs: Vec<Part>,
@@ -61,27 +75,35 @@ impl SpringGroup {
     fn get_possibilities(&self) -> usize {
         let mut possibilities: usize = 0;
 
-        let mut stack: Vec<(Option<SpringValidation>, Vec<Part>)> =
-            vec![(None, self.springs.clone())];
+        let mut stack: Vec<(SpringValidation, Vec<Part>)> =
+            vec![(SpringValidation::new(), self.springs.clone())];
 
         while let Some((validation, mut possibility)) = stack.pop() {
-            let updated_validation = SpringGroup::is_valid_springs(self, &possibility, validation);
-            if !updated_validation.valid {
-                continue;
-            }
+            // let updated_validation = SpringGroup::is_valid_springs(self, &possibility, validation);
+            // if !updated_validation.valid {
+            //     continue;
+            // }
 
-            for i in updated_validation.part_index..possibility.len() {
+            for i in validation.part_index..possibility.len() {
                 let part = &possibility[i];
 
                 if *part == Part::Unknown {
                     possibility[i] = Part::Good;
-                    stack.push((Some(updated_validation), possibility.clone()));
+                    let new_validation =
+                        SpringGroup::is_valid_springs(self, &possibility, validation);
+                    if new_validation.valid {
+                        stack.push((new_validation, possibility.clone()));
+                    }
                     possibility[i] = Part::Damaged;
-                    stack.push((Some(updated_validation), possibility));
+                    let new_validation =
+                        SpringGroup::is_valid_springs(self, &possibility, validation);
+                    if new_validation.valid {
+                        stack.push((new_validation, possibility));
+                    }
                     break;
                 }
             }
-            if updated_validation.done {
+            if validation.done {
                 // println!("Possibilitiy: {:?}", possibility);
                 possibilities += 1;
             }
@@ -91,27 +113,17 @@ impl SpringGroup {
     }
 
     fn _is_valid(&self) -> bool {
-        self.is_valid_springs(&self.springs, None).valid
+        self.is_valid_springs(&self.springs, SpringValidation::new())
+            .valid
     }
 
     fn is_valid_springs(
         &self,
         springs: &[Part],
-        validation: Option<SpringValidation>,
+        mut validation: SpringValidation,
     ) -> SpringValidation {
         let mut segment_iter = self.segments.iter();
-        let mut validation = match validation {
-            Some(validation) => validation,
-            None => SpringValidation {
-                valid: false,
-                segment_index: 0,
-                completed_segments: 0,
-                current_len: 0,
-                building: false,
-                part_index: 0,
-                done: false,
-            },
-        };
+
         validation.valid = false;
         let mut segment = segment_iter.nth(validation.segment_index).unwrap_or(&0);
 
