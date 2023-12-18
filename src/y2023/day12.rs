@@ -28,6 +28,21 @@ struct SpringGroup {
 }
 
 impl SpringGroup {
+    fn from_str2(s: &str) -> SpringGroup {
+        let base = SpringGroup::from_str(&s).expect("Expected parsing");
+        let mut springs: Vec<Part> = vec![];
+        let mut segments: Vec<u32> = vec![];
+        for i in 0..5 {
+            springs.append(&mut base.springs.clone());
+            if i < 4 {
+                springs.push(Part::Unknown);
+            }
+            segments.append(&mut base.segments.clone());
+        }
+
+        SpringGroup { springs, segments }
+    }
+
     fn get_possibilities(&self) -> usize {
         let mut possibilities: Vec<Vec<Part>> = vec![];
 
@@ -128,7 +143,7 @@ impl FromStr for SpringGroup {
     type Err = ParseSpringGroupError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut iter = s.split(' ');
+        let mut iter = s.trim().split(' ');
         let springs: Vec<Part> = iter
             .next()
             .unwrap()
@@ -165,7 +180,10 @@ pub fn part_1(input: &str) -> usize {
 }
 
 pub fn part_2(input: &str) -> usize {
-    0
+    input
+        .lines()
+        .map(|line| SpringGroup::from_str2(line).get_possibilities())
+        .sum()
 }
 
 #[cfg(test)]
@@ -174,12 +192,12 @@ mod tests {
 
     #[test]
     fn part_1_test() {
-        let input = "#.#.### 1,1,3
-        .#...#....###. 1,1,3
-        .#.###.#.###### 1,3,1,6
-        ####.#...#... 4,1,1
-        #....######..#####. 1,6,5
-        .###.##....# 3,2,1";
+        let input = "???.### 1,1,3
+        .??..??...?##. 1,1,3
+        ?#?#?#?#?#?#?#? 1,3,1,6
+        ????.#...#... 4,1,1
+        ????.######..#####. 1,6,5
+        ?###???????? 3,2,1";
 
         assert_eq!(part_1(input), 21);
     }
@@ -249,8 +267,25 @@ mod tests {
     }
 
     #[test]
+    fn parse_spring_group2() {
+        let input = ".# 1";
+
+        assert_eq!(
+            SpringGroup::from_str2(&input),
+            SpringGroup::from_str(&".#?.#?.#?.#?.# 1,1,1,1,1").unwrap()
+        );
+
+        assert_eq!(
+            SpringGroup::from_str(
+                &"???.###????.###????.###????.###????.### 1,1,3,1,1,3,1,1,3,1,1,3,1,1,3"
+            )
+            .unwrap(),
+            SpringGroup::from_str2(&"???.### 1,1,3")
+        );
+    }
+
+    #[test]
     fn get_possibilities() {
-        println!("abc {}", Part::Damaged);
         assert_eq!(
             SpringGroup::from_str(&"?###???????? 3,2,1")
                 .unwrap()
@@ -259,12 +294,23 @@ mod tests {
         )
     }
 
-    // #[test]
-    // fn part_2_test() {
-    //     let input = "Time:      7  15   30
-    //     Distance:  9  40  200";
+    #[test]
+    fn get_possibilities2() {
+        assert_eq!(
+            SpringGroup::from_str2(&"???.### 1,1,3").get_possibilities(),
+            1
+        );
+    }
 
-    //     let lines: Vec<String> = input.lines().map(|l| l.trim().to_string()).collect();
-    //     assert_eq!(part_2(&lines), 71503);
-    // }
+    #[test]
+    fn part_2_test() {
+        let input = "???.### 1,1,3
+        .??..??...?##. 1,1,3
+        ?#?#?#?#?#?#?#? 1,3,1,6
+        ????.#...#... 4,1,1
+        ????.######..#####. 1,6,5
+        ?###???????? 3,2,1";
+
+        assert_eq!(part_2(&input), 525152);
+    }
 }
