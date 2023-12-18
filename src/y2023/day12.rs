@@ -59,12 +59,12 @@ impl SpringGroup {
     }
 
     fn get_possibilities(&self) -> usize {
-        let mut possibilities: Vec<Vec<Part>> = vec![];
+        let mut possibilities: usize = 0;
 
         let mut stack: Vec<(Option<SpringValidation>, Vec<Part>)> =
             vec![(None, self.springs.clone())];
 
-        while let Some((validation, possibility)) = stack.pop() {
+        while let Some((validation, mut possibility)) = stack.pop() {
             let updated_validation = SpringGroup::is_valid_springs(self, &possibility, validation);
             if !updated_validation.valid {
                 continue;
@@ -74,22 +74,20 @@ impl SpringGroup {
                 let part = &possibility[i];
 
                 if *part == Part::Unknown {
-                    let mut good = possibility.clone();
-                    good[i] = Part::Good;
-                    stack.push((Some(updated_validation), good));
-                    let mut damaged = possibility.clone();
-                    damaged[i] = Part::Damaged;
-                    stack.push((Some(updated_validation), damaged));
+                    possibility[i] = Part::Good;
+                    stack.push((Some(updated_validation), possibility.clone()));
+                    possibility[i] = Part::Damaged;
+                    stack.push((Some(updated_validation), possibility));
                     break;
                 }
             }
             if updated_validation.done {
                 // println!("Possibilitiy: {:?}", possibility);
-                possibilities.push(possibility.clone());
+                possibilities += 1;
             }
         }
 
-        possibilities.len()
+        possibilities
     }
 
     fn _is_valid(&self) -> bool {
