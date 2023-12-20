@@ -200,10 +200,10 @@ impl SpringGroup {
             .len()
     }
 
-    fn dp_base_case(window: usize, springs: &[Part]) -> (u32, usize) {
+    fn dp_base_case(window: usize, springs: &[Part]) -> (u64, usize) {
         let damaged_count: usize = SpringGroup::damaged_count(springs);
 
-        let mut value: u32 = 0;
+        let mut value: u64 = 0;
         let mut counts = PartCounts {
             good: 0,
             damaged: 0,
@@ -232,14 +232,13 @@ impl SpringGroup {
         (value, damaged_count)
     }
 
-    fn dp_possibilities(&self) -> u32 {
-        let mut memo: HashMap<(&[Part], &[u32]), (u32, usize)> = HashMap::new();
+    fn dp_possibilities(&self) -> u64 {
+        let mut memo: HashMap<(&[Part], &[u32]), (u64, usize)> = HashMap::new();
         fn helper<'a>(
             springs: &'a [Part],
             segments: &'a [u32],
-            memo: &mut HashMap<(&'a [Part], &'a [u32]), (u32, usize)>,
-        ) -> (u32, usize) {
-            
+            memo: &mut HashMap<(&'a [Part], &'a [u32]), (u64, usize)>,
+        ) -> (u64, usize) {
             let sum = match memo.get(&(springs, segments)) {
                 Some(value) => value,
                 None => {
@@ -260,12 +259,8 @@ impl SpringGroup {
                     }
 
                     let target = SpringGroup::damaged_count(springs);
-                    // println!(
-                    //     "Target {}, springs: {:?}, segments: {:?}",
-                    //     target, springs, segments
-                    // );
 
-                    let mut value: u32 = 0;
+                    let mut value: u64 = 0;
                     let mut damaged_value: usize = 0;
                     let window =
                         segments.iter().map(|s| *s as usize).sum::<usize>() + segments.len() - 1;
@@ -276,9 +271,6 @@ impl SpringGroup {
                         let v1 = helper(&springs[start..end], &segments[..1], memo);
                         let mut v2 = (1, 0);
                         if segments.len() > 1 {
-                            // if v1.1 > 0 {
-                            //     println!("target is lower! {}", target - v1.1);
-                            // }
                             v2 = helper(&springs[start2..], &segments[1..], memo);
                         }
                         if springs[end] == Part::Damaged {
@@ -294,34 +286,13 @@ impl SpringGroup {
                             let start = n;
                             let end = n + segments[0] as usize;
                             if springs[end] == Part::Damaged {
-                                // println!(
-                                //     "skipping [{},{}]={:?} as {} is damaged",
-                                //     start,
-                                //     end,
-                                //     &springs[start..end],
-                                //     end
-                                // );
                                 continue;
                             }
                             let start2 = end + 1;
-                            let end2 = springs.len();
-                            // println!(
-                            //     "segment: [{},{}]={:?}, rest: [{},{}]={:?}",
-                            //     start,
-                            //     end,
-                            //     &springs[start..end],
-                            //     start2,
-                            //     end2,
-                            //     &springs[start2..]
-                            // );
                             let v1 = helper(&springs[start..end], &segments[..1], memo);
                             let mut v2 = (1, 0);
                             if segments.len() > 1 {
-                                // if v1.1 > 0 {
-                                //     println!("target is lower! {}", target - v1.1);
-                                // }
-                                v2 =
-                                    helper(&springs[start2..], &segments[1..], memo);
+                                v2 = helper(&springs[start2..], &segments[1..], memo);
                             }
                             if v1.1 + v2.1 == target && v1.0 * v2.0 > 0 {
                                 value += v1.0 * v2.0;
@@ -341,7 +312,11 @@ impl SpringGroup {
             *sum
         }
 
-        helper(&self.springs, &self.segments, &mut memo).0
+        let result = helper(&self.springs, &self.segments, &mut memo).0;
+        if result == 0 {
+            println!("Probably a problem with {:?}", self);
+        }
+        result
     }
 }
 
@@ -390,7 +365,7 @@ pub fn part_2(input: &str) -> u64 {
     let lines: Vec<_> = input.lines().collect();
     let n_jobs = lines.len();
     let n_workers = 32;
-    let pool = Pool::<ThunkWorker<u32>>::new(n_workers);
+    let pool = Pool::<ThunkWorker<u64>>::new(n_workers);
 
     let (tx, rx) = channel();
     for line in input.lines() {
@@ -412,7 +387,7 @@ pub fn part_2(input: &str) -> u64 {
             n_jobs,
             sum
         );
-        sum += result as u64;
+        sum += result;
     }
     sum
 }
@@ -510,6 +485,10 @@ mod tests {
             SpringGroup::from_str2("???.### 1,1,3").get_possibilities(),
             1
         );
+        // assert_eq!(
+        //     SpringGroup::from_str2("?.#?????.?????????#. 1,2,1,4,1,2").get_possibilities(),
+        //     1
+        // );
         assert_eq!(
             SpringGroup::from_str(".??????. 3,1")
                 .unwrap()
@@ -550,15 +529,21 @@ mod tests {
         );
 
         assert_eq!(
-            SpringGroup::from_str(".?##?.?? 3,1").unwrap().dp_possibilities(),
+            SpringGroup::from_str(".?##?.?? 3,1")
+                .unwrap()
+                .dp_possibilities(),
             4
         );
         assert_eq!(
-            SpringGroup::from_str(".?##?.??.?? 3,1,1").unwrap().dp_possibilities(),
+            SpringGroup::from_str(".?##?.??.?? 3,1,1")
+                .unwrap()
+                .dp_possibilities(),
             8
         );
         assert_eq!(
-            SpringGroup::from_str(".??.??.??.??.??.??. 1,1,1,1,1,1").unwrap().dp_possibilities(),
+            SpringGroup::from_str(".??.??.??.??.??.??. 1,1,1,1,1,1")
+                .unwrap()
+                .dp_possibilities(),
             64
         );
         assert_eq!(
@@ -594,14 +579,16 @@ mod tests {
 
     #[test]
     fn part_2_test() {
-        let input = "???.### 1,1,3
+        let input = String::from(
+            "???.### 1,1,3
         .??..??...?##. 1,1,3
         ?#?#?#?#?#?#?#? 1,3,1,6
         ????.#...#... 4,1,1
         ????.######..#####. 1,6,5
-        ?###???????? 3,2,1";
+        ?###???????? 3,2,1",
+        );
 
-        assert_eq!(part_2(input), 525152);
+        assert_eq!(part_2(&input), 525152);
     }
 
     #[test]
