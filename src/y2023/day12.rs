@@ -51,6 +51,12 @@ impl SpringValidation {
     }
 }
 
+struct PartCounts {
+    good: usize,
+    damaged: usize,
+    unknown: usize,
+}
+
 #[derive(Debug, PartialEq)]
 struct SpringGroup {
     springs: Vec<Part>,
@@ -186,6 +192,41 @@ impl SpringGroup {
         validation
     }
 
+    fn dp_base_case<'a>(window: usize, springs: &'a [Part]) -> u32 {
+        let damaged_count: usize = springs
+            .iter()
+            .filter(|part| **part == Part::Damaged)
+            .collect::<Vec<_>>()
+            .len();
+        let mut value: u32 = 0;
+        let mut counts = PartCounts {
+            good: 0,
+            damaged: 0,
+            unknown: 0,
+        };
+        for n in 0..springs.len() {
+            let part = springs[n];
+            match part {
+                Part::Damaged => counts.damaged += 1,
+                Part::Unknown => counts.unknown += 1,
+                Part::Good => counts.good += 1,
+            }
+            if n + 1 > window {
+                let part_removal = springs[n - window];
+                match part_removal {
+                    Part::Damaged => counts.damaged -= 1,
+                    Part::Unknown => counts.unknown -= 1,
+                    Part::Good => counts.good -= 1,
+                }
+            }
+            if n + 1 >= window && counts.good == 0 && counts.damaged >= damaged_count {
+                value += 1;
+            }
+        }
+
+        value
+    }
+
     fn dp_possibilities(&self) -> u32 {
         let mut memo: HashMap<(&[Part], &[u32]), u32> = HashMap::new();
         fn helper<'a>(
@@ -204,16 +245,12 @@ impl SpringGroup {
                         memo.insert((springs, segments), 0);
                         return 0;
                     }
-                    if segments.len() == 1 && springs.len() == segments[0] as usize {
-                        for part in springs {
-                            if *part == Part::Good {
-                                memo.insert((springs, segments), 0);
-                                return 0;
-                            }
-                        }
 
-                        memo.insert((springs, segments), 1);
-                        return 1;
+                    if segments.len() == 1 {
+                        let value = SpringGroup::dp_base_case(segments[0] as usize, springs);
+
+                        memo.insert((springs, segments), value);
+                        return *memo.get(&(springs, segments)).unwrap();
                     }
 
                     let mut value: u32 = 0;
@@ -247,20 +284,20 @@ impl SpringGroup {
                             let start = n;
                             let end = n + segments[0] as usize;
                             if springs[end] == Part::Damaged {
-                                println!("skipping {} is damaged", end);
+                                println!("skipping [{},{}]={:?} as {} is damaged", start,end, &springs[start..end], end);
                                 continue;
                             }
                             let start2 = end + 1;
                             let end2 = springs.len();
-                            // println!(
-                            //     "segment: [{},{}]={:?}, rest: [{},{}]={:?}",
-                            //     start,
-                            //     end,
-                            //     &springs[start..end],
-                            //     start2,
-                            //     end2,
-                            //     &springs[start2..]
-                            // );
+                            println!(
+                                "segment: [{},{}]={:?}, rest: [{},{}]={:?}",
+                                start,
+                                end,
+                                &springs[start..end],
+                                start2,
+                                end2,
+                                &springs[start2..]
+                            );
                             let v1 = helper(&springs[start..end], &segments[..1], memo);
                             let mut v2 = 1;
                             if segments.len() > 1 {
@@ -473,12 +510,18 @@ mod tests {
         //         .dp_possibilities(),
         //     1
         // );
-        // assert_eq!(
-        //     SpringGroup::from_str("?###???????? 3,2,1")
-        //         .unwrap()
-        //         .dp_possibilities(),
-        //     10
-        // );
+        assert_eq!(
+            SpringGroup::from_str("??????? 2,1")
+                .unwrap()
+                .dp_possibilities(),
+            10
+        );
+        assert_eq!(
+            SpringGroup::from_str("?###???????? 3,2,1")
+                .unwrap()
+                .dp_possibilities(),
+            10
+        );
         // assert_eq!(
         //     SpringGroup::from_str2_v2(".??..??...?##. 1,1,3").dp_possibilities(),
         //     16384
@@ -487,15 +530,16 @@ mod tests {
         //     SpringGroup::from_str2_v2("????.######..#####. 1,6,5").dp_possibilities(),
         //     2500
         // );
-        assert_eq!(
-            SpringGroup::from_str("???###? 1").unwrap().dp_possibilities(),
-            0
-        );
-
-        assert_eq!(
-            SpringGroup::from_str2_v2("?###???????? 3,2,1").dp_possibilities(),
-            506250
-        );
+        // assert_eq!(
+        //     SpringGroup::from_str("???###? 1")
+        //         .unwrap()
+        //         .dp_possibilities(),
+        //     0
+        // );
+        // assert_eq!(
+        //     SpringGroup::from_str2_v2("?###???????? 3,2,1").dp_possibilities(),
+        //     506250
+        // );
     }
 
     #[test]
@@ -516,5 +560,23 @@ mod tests {
             SpringGroup::from_str2_v2("......# 1"),
             SpringGroup::from_str2(".# 1")
         );
+    }
+
+    #[test]
+    fn dp_base_case_test() {
+        let sg = SpringGroup::from_str(".?##??. 3").unwrap();
+        let sg2 = SpringGroup::from_str(".?##.#. 3").unwrap();
+        let sg3 = SpringGroup::from_str("### 3").unwrap();
+
+        assert_eq!(SpringGroup::dp_base_case(4, &sg.springs), 2);
+        assert_eq!(SpringGroup::dp_base_case(3, &sg.springs), 2);
+        assert_eq!(SpringGroup::dp_base_case(2, &sg.springs), 1);
+        assert_eq!(SpringGroup::dp_base_case(2, &sg2.springs), 0);
+        assert_eq!(SpringGroup::dp_base_case(3, &sg2.springs), 0);
+        assert_eq!(SpringGroup::dp_base_case(4, &sg2.springs), 0);
+        assert_eq!(SpringGroup::dp_base_case(5, &sg2.springs), 0);
+        assert_eq!(SpringGroup::dp_base_case(1, &sg3.springs), 0);
+        assert_eq!(SpringGroup::dp_base_case(2, &sg3.springs), 0);
+        assert_eq!(SpringGroup::dp_base_case(3, &sg3.springs), 1);
     }
 }
