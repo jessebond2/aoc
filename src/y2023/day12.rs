@@ -1,4 +1,5 @@
 use core::fmt;
+use std::collections::HashMap;
 use std::sync::mpsc::channel;
 use std::time::Instant;
 use std::{
@@ -8,7 +9,7 @@ use std::{
 use workerpool::thunk::{Thunk, ThunkWorker};
 use workerpool::Pool;
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone, Copy, Eq, Hash)]
 enum Part {
     Good,
     Damaged,
@@ -72,6 +73,25 @@ impl SpringGroup {
         SpringGroup { springs, segments }
     }
 
+    fn from_str2_v2(s: &str) -> SpringGroup {
+        let spring_group = Self::from_str2(s);
+        let mut springs: Vec<Part> = vec![];
+        let mut last = Part::Unknown;
+
+        for part in spring_group.springs {
+            if last == Part::Good && part == Part::Good {
+                continue;
+            }
+            springs.push(part);
+            last = part;
+        }
+
+        SpringGroup {
+            springs,
+            segments: spring_group.segments,
+        }
+    }
+
     fn get_possibilities(&self) -> usize {
         let mut possibilities: usize = 0;
 
@@ -79,11 +99,6 @@ impl SpringGroup {
             vec![(SpringValidation::new(), self.springs.clone())];
 
         while let Some((validation, mut possibility)) = stack.pop() {
-            // let updated_validation = SpringGroup::is_valid_springs(self, &possibility, validation);
-            // if !updated_validation.valid {
-            //     continue;
-            // }
-
             for i in validation.part_index..possibility.len() {
                 let part = &possibility[i];
 
@@ -170,6 +185,101 @@ impl SpringGroup {
         validation.done = true;
         validation
     }
+
+    fn dp_possibilities(&self) -> u32 {
+        let mut memo: HashMap<(&[Part], &[u32]), u32> = HashMap::new();
+        fn helper<'a>(
+            springs: &'a [Part],
+            segments: &'a [u32],
+            memo: &mut HashMap<(&'a [Part], &'a [u32]), u32>,
+        ) -> u32 {
+            let sum = match memo.get(&(springs, segments)) {
+                Some(value) => value,
+                None => {
+                    if springs.is_empty() || (springs.len() == 1 && segments[0] > 1) {
+                        memo.insert((springs, segments), 0);
+                        return 0;
+                    }
+                    if segments.len() == 1 && (springs.len() < segments[0] as usize) {
+                        memo.insert((springs, segments), 0);
+                        return 0;
+                    }
+                    if segments.len() == 1 && springs.len() == segments[0] as usize {
+                        for part in springs {
+                            if *part == Part::Good {
+                                memo.insert((springs, segments), 0);
+                                return 0;
+                            }
+                        }
+
+                        memo.insert((springs, segments), 1);
+                        return 1;
+                    }
+
+                    let mut value: u32 = 0;
+                    let window =
+                        segments.iter().map(|s| *s as usize).sum::<usize>() + segments.len() - 1;
+                    if window == springs.len() {
+                        let start = 0;
+                        let end = segments[0] as usize;
+                        let start2 = end + 1;
+                        let end2 = springs.len();
+                        // println!(
+                        //     "segment: [{},{}]={:?}, rest: [{},{}]={:?}",
+                        //     start,
+                        //     end,
+                        //     &springs[start..end],
+                        //     start2,
+                        //     end2,
+                        //     &springs[start2..]
+                        // );
+                        let v1 = helper(&springs[start..end], &segments[..1], memo);
+                        let mut v2 = 1;
+                        if segments.len() > 1 {
+                            v2 = helper(&springs[start2..], &segments[1..], memo);
+                        }
+                        if springs[end] == Part::Damaged {
+                            v2 = 0;
+                        }
+                        value += v1 * v2;
+                    } else {
+                        for n in 0..springs.len() - window {
+                            let start = n;
+                            let end = n + segments[0] as usize;
+                            if springs[end] == Part::Damaged {
+                                println!("skipping {} is damaged", end);
+                                continue;
+                            }
+                            let start2 = end + 1;
+                            let end2 = springs.len();
+                            // println!(
+                            //     "segment: [{},{}]={:?}, rest: [{},{}]={:?}",
+                            //     start,
+                            //     end,
+                            //     &springs[start..end],
+                            //     start2,
+                            //     end2,
+                            //     &springs[start2..]
+                            // );
+                            let v1 = helper(&springs[start..end], &segments[..1], memo);
+                            let mut v2 = 1;
+                            if segments.len() > 1 {
+                                v2 = helper(&springs[start2..], &segments[1..], memo);
+                            }
+                            value += v1 * v2;
+                        }
+                    }
+
+                    memo.insert((springs, segments), value);
+                    memo.get(&(springs, segments)).unwrap()
+                }
+            };
+
+            *sum
+        }
+
+        helper(&self.springs, &self.segments, &mut memo)
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -212,19 +322,19 @@ pub fn part_1(input: &str) -> usize {
         .sum()
 }
 
-pub fn part_2(input: &str) -> usize {
+pub fn part_2(input: &str) -> u64 {
     let now = Instant::now();
     let lines: Vec<_> = input.lines().collect();
     let n_jobs = lines.len();
-    let n_workers = 16;
-    let pool = Pool::<ThunkWorker<usize>>::new(n_workers);
+    let n_workers = 32;
+    let pool = Pool::<ThunkWorker<u32>>::new(n_workers);
 
     let (tx, rx) = channel();
     for line in input.lines() {
         let string = String::from(line);
         pool.execute_to(
             tx.clone(),
-            Thunk::of(move || SpringGroup::from_str2(&string).get_possibilities()),
+            Thunk::of(move || SpringGroup::from_str2_v2(&string).dp_possibilities()),
         );
     }
 
@@ -239,7 +349,7 @@ pub fn part_2(input: &str) -> usize {
             n_jobs,
             sum
         );
-        sum += result;
+        sum += result as u64;
     }
     sum
 }
@@ -337,6 +447,55 @@ mod tests {
             SpringGroup::from_str2("???.### 1,1,3").get_possibilities(),
             1
         );
+        assert_eq!(
+            SpringGroup::from_str(".??????. 3,1")
+                .unwrap()
+                .get_possibilities(),
+            3
+        );
+    }
+
+    #[test]
+    fn dp_possibilities_test() {
+        // assert_eq!(
+        //     SpringGroup::from_str2_v2("???.### 1,1,3").dp_possibilities(),
+        //     1
+        // );
+        // assert_eq!(
+        //     SpringGroup::from_str(".??????. 3,1")
+        //         .unwrap()
+        //         .dp_possibilities(),
+        //     3
+        // );
+        // assert_eq!(
+        //     SpringGroup::from_str(".???#??. 3,1")
+        //         .unwrap()
+        //         .dp_possibilities(),
+        //     1
+        // );
+        // assert_eq!(
+        //     SpringGroup::from_str("?###???????? 3,2,1")
+        //         .unwrap()
+        //         .dp_possibilities(),
+        //     10
+        // );
+        // assert_eq!(
+        //     SpringGroup::from_str2_v2(".??..??...?##. 1,1,3").dp_possibilities(),
+        //     16384
+        // );
+        // assert_eq!(
+        //     SpringGroup::from_str2_v2("????.######..#####. 1,6,5").dp_possibilities(),
+        //     2500
+        // );
+        assert_eq!(
+            SpringGroup::from_str("???###? 1").unwrap().dp_possibilities(),
+            0
+        );
+
+        assert_eq!(
+            SpringGroup::from_str2_v2("?###???????? 3,2,1").dp_possibilities(),
+            506250
+        );
     }
 
     #[test]
@@ -349,5 +508,13 @@ mod tests {
         ?###???????? 3,2,1";
 
         assert_eq!(part_2(input), 525152);
+    }
+
+    #[test]
+    fn from_str2_v2_test() {
+        assert_eq!(
+            SpringGroup::from_str2_v2("......# 1"),
+            SpringGroup::from_str2(".# 1")
+        );
     }
 }
