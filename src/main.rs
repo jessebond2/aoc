@@ -129,4 +129,68 @@ fn main() {
 
     let result_2 = crate::y2023::day12::part_2(&input);
     println!("Result from day12 part 2: {}", result_2);
+
+    let input =
+        read_file_to_string("./input/2023/day13.txt").expect("Unable to parse file into integers");
+    let result_1 = crate::y2023::day13::part_1(&input);
+    println!("Result from day13 part 1: {}", result_1);
+
+    let result_2 = crate::y2023::day13::part_2(&input);
+    println!("Result from day13 part 2: {}", result_2);
+
+    let input =
+        read_file_to_string("./input/2023/day14.txt").expect("Unable to parse file into integers");
+    let result_1 = crate::y2023::day14::part_1(&input);
+    println!("Result from day14 part 1: {}", result_1);
+
+    let result_2 = crate::y2023::day14::part_2(&input);
+    println!("Result from day14 part 2: {}", result_2);
+
+    let input =
+        read_file_to_string("./input/2023/day15.txt").expect("Unable to parse file into integers");
+    let result_1 = crate::y2023::day15::part_1(&input);
+    println!("Result from day15 part 1: {}", result_1);
+
+    let result_2 = crate::y2023::day15::part_2(&input);
+    println!("Result from day15 part 2: {}", result_2);
+
+    let input =
+        read_file_to_string("./input/2023/day16.txt").expect("Unable to parse file into integers");
+    let result_1 = crate::y2023::day16::part_1(&input);
+    println!("Result from day16 part 1: {}", result_1);
+
+    let result_2 = crate::y2023::day16::part_2(&input);
+    println!("Result from day16 part 2: {}", result_2);
+
+    let input =
+        read_file_to_string("./input/2023/day17.txt").expect("Unable to parse file into integers");
+    let result_1 = crate::y2023::day17::part_1(&input);
+    println!("Result from day17 part 1: {}", result_1);
+
+    let result_2 = crate::y2023::day17::part_2(&input);
+    println!("Result from day17 part 2: {}", result_2);
+
+    let input =
+        read_file_to_string("./input/2023/day18.txt").expect("Unable to parse file into integers");
+    let result_1 = crate::y2023::day18::part_1(&input);
+    println!("Result from day18 part 1: {}", result_1);
+
+    let result_2 = crate::y2023::day18::part_2(&input);
+    println!("Result from day18 part 2: {}", result_2);
+
+    let input =
+        read_file_to_string("./input/2023/day19.txt").expect("Unable to parse file into integers");
+    let result_1 = crate::y2023::day19::part_1(&input);
+    println!("Result from day19 part 1: {}", result_1);
+
+    let result_2 = crate::y2023::day19::part_2(&input);
+    println!("Result from day19 part 2: {}", result_2);
+
+    let input =
+        read_file_to_string("./input/2023/day20.txt").expect("Unable to parse file into integers");
+    let result_1 = crate::y2023::day20::part_1(&input);
+    println!("Result from day20 part 1: {}", result_1);
+
+    let result_2 = crate::y2023::day20::part_2(&input);
+    println!("Result from day20 part 2: {}", result_2);
 }

@@ -1,8 +1,8 @@
-pub fn part_1(input: &str) -> usize {
+pub fn part_1(_input: &str) -> usize {
     0
 }
 
-pub fn part_2(input: &str) -> usize {
+pub fn part_2(_input: &str) -> usize {
     0
 }
 
@@ -14,13 +14,13 @@ mod tests {
     fn part_1_test() {
         let input = "";
 
-        assert_eq!(part_1(&input), 288);
+        assert_eq!(part_1(input), 288);
     }
 
     #[test]
     fn part_2_test() {
         let input = "";
 
-        assert_eq!(part_2(&input), 71503);
+        assert_eq!(part_2(input), 71503);
     }
 }
