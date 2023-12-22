@@ -1,7 +1,6 @@
 use core::fmt;
 use std::collections::HashMap;
 use std::sync::mpsc::channel;
-use std::time::Instant;
 use std::{
     fmt::{Display, Formatter},
     str::FromStr,
@@ -361,7 +360,7 @@ pub fn part_1(input: &str) -> usize {
 }
 
 pub fn part_2(input: &str) -> u64 {
-    let now = Instant::now();
+    // let now = Instant::now();
     let lines: Vec<_> = input.lines().collect();
     let n_jobs = lines.len();
     let n_workers = 32;

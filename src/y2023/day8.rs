@@ -158,7 +158,7 @@ pub fn part_2(input: &Vec<String>) -> u64 {
             break 'outer;
         }
 
-        let last: Vec<_> = current.clone().iter().map(|node| node.name).collect();
+        let _last: Vec<_> = current.clone().iter().map(|node| node.name).collect();
         let mut next: Vec<&Node> = vec![];
 
         for (idx, node) in current.clone().into_iter().enumerate() {
