@@ -140,12 +140,12 @@ pub fn part_2(input: &Vec<String>) -> u64 {
     let map = build_map(iter);
     let mut current = find_ending_with_a(&map);
 
-    let loop_sizes: Vec<_> = current
+    let _loop_sizes: Vec<_> = current
         .iter()
         .map(|node| loop_size(node, &moves, &map))
         .collect();
-    println!("starting positions: {:?}", current);
-    println!("loop_sizes positions: {:?}", loop_sizes);
+    // println!("starting positions: {:?}", current);
+    // println!("loop_sizes positions: {:?}", loop_sizes);
 
     let mut step: u64 = 0;
     let mut already_visited: Vec<(usize, u64)> = vec![];
@@ -163,10 +163,10 @@ pub fn part_2(input: &Vec<String>) -> u64 {
 
         for (idx, node) in current.clone().into_iter().enumerate() {
             if ends_in(current[idx].name, 'Z') {
-                println!(
-                    "Node {} name {} ends in Z, step {}, cloned {:?}, found_first {}",
-                    idx, current[idx].name, step, last, found_first
-                );
+                // println!(
+                //     "Node {} name {} ends in Z, step {}, cloned {:?}, found_first {}",
+                //     idx, current[idx].name, step, last, found_first
+                // );
                 already_visited.push((idx, step));
                 found_first = true;
             }

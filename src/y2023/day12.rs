@@ -376,17 +376,17 @@ pub fn part_2(input: &str) -> u64 {
         );
     }
 
-    let mut job_count = 0;
+    // let mut job_count = 0;
     let mut sum = 0;
     for result in rx.iter().take(n_jobs) {
-        job_count += 1;
-        println!(
-            "Elapsed time: {:?}, count: {} of {}, sum {}",
-            now.elapsed(),
-            job_count,
-            n_jobs,
-            sum
-        );
+        // job_count += 1;
+        // println!(
+        //     "Elapsed time: {:?}, count: {} of {}, sum {}",
+        //     now.elapsed(),
+        //     job_count,
+        //     n_jobs,
+        //     sum
+        // );
         sum += result;
     }
     sum
