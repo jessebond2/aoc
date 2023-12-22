@@ -127,7 +127,7 @@ impl MirrorField {
 
     fn smudge_score(&self) -> usize {
         let original_score = Self::score(self);
-
+        println!("Self {:?}", self);
         let row_possibilities = Self::find_all_differences(&self.rows);
         for pos in row_possibilities {
             let mut new_row = self.rows.clone();
@@ -168,7 +168,7 @@ impl MirrorField {
         for pos in col_possibilities {
             let mut new_row = self.rows.clone();
             let mut new_col = self.cols.clone();
-            let row_bit_index = bit_difference_index(new_row[pos.0], new_row[pos.1]);
+            let row_bit_index = bit_difference_index(new_col[pos.0], new_col[pos.1]);
             let row = new_row.len() - row_bit_index as usize - 1;
 
             new_col[pos.0] = flip_bit(new_col[pos.0], row_bit_index as usize);
@@ -375,6 +375,26 @@ mod tests {
                 #....#..#"
             ),
             100
+        );
+    }
+
+    #[test]
+    fn part_2_input_test() {
+        assert_ne!(
+            part_2(
+                "##.#.#####.....
+        ##...##.###.###
+        ##...##.###.###
+        ##.#.#####.....
+        .##...#.#...#..
+        ##..#...#..##..
+        ###.######....#
+        .##.######..###
+        #...#...###....
+        ..#.....#.##...
+        ....#......#.##"
+            ),
+            0
         );
     }
 
