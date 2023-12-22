@@ -40,11 +40,11 @@ struct MirrorField {
 }
 
 impl MirrorField {
-    fn row_reflection(&self) -> usize {
+    fn row_reflection(&self) -> Option<usize> {
         Self::reflection(&self.rows)
     }
 
-    fn col_reflection(&self) -> usize {
+    fn col_reflection(&self) -> Option<usize> {
         Self::reflection(&self.cols)
     }
 
@@ -93,7 +93,7 @@ impl MirrorField {
         result
     }
 
-    fn reflection(vec: &Vec<u32>) -> usize {
+    fn reflection(vec: &Vec<u32>) -> Option<usize> {
         let mut result = None;
         let mut m = vec.len() / 2 + 1;
         for n in (0..=(vec.len() / 2)).rev() {
@@ -108,25 +108,21 @@ impl MirrorField {
             m += 1;
         }
 
-        if let Some(result) = result {
-            result + 1
-        } else {
-            0
-        }
+        result.map(|result| result + 1)
     }
 
     fn score(&self) -> usize {
-        self.row_reflection() * 100 + self.col_reflection()
+        self.row_reflection().unwrap_or(0) * 100 + self.col_reflection().unwrap_or(0)
     }
 
     fn score_2(&self, rows: &Vec<u32>, cols: &Vec<u32>) -> usize {
         let old_row = Self::row_reflection(self);
-        let new_row = Self::reflection(cols);
-        if old_row > 0 && old_row != new_row {
-            return Self::reflection(cols);
+        let new_row = Self::reflection(rows);
+        if old_row != new_row {
+            return new_row.unwrap_or(0) * 100;
         }
 
-        Self::reflection(rows) * 100
+        Self::reflection(cols).unwrap_or(0)
     }
 
     fn smudge_score(&self) -> usize {
@@ -162,14 +158,38 @@ impl MirrorField {
             let mut new_row = self.rows.clone();
             let mut new_col = self.cols.clone();
             new_row[pos.1] = flip_bit(new_row[pos.1], column_bit_index as usize);
-            new_col[column] = flip_bit(new_col[column], new_row.len() - 1 - column);
+            new_col[column] = flip_bit(new_col[column], new_row.len() - 1 - pos.1);
+            let new_score = Self::score_2(self, &new_row, &new_col);
+            if new_score > 0 && new_score != original_score {
+                return new_score;
+            }
+        }
+        let col_possibilities = Self::find_all_differences(&self.cols);
+        for pos in col_possibilities {
+            let mut new_row = self.rows.clone();
+            let mut new_col = self.cols.clone();
+            let row_bit_index = bit_difference_index(new_row[pos.0], new_row[pos.1]);
+            let row = new_row.len() - row_bit_index as usize - 1;
+
+            new_col[pos.0] = flip_bit(new_col[pos.0], row_bit_index as usize);
+            new_row[row] = flip_bit(new_row[row], new_row.len() - 1 - row);
+
+            let new_score = Self::score_2(self, &new_row, &new_col);
+            if new_score > 0 && new_score != original_score {
+                return new_score;
+            }
+
+            let mut new_row = self.rows.clone();
+            let mut new_col = self.cols.clone();
+            new_col[pos.1] = flip_bit(new_col[pos.1], row_bit_index as usize);
+            new_row[row] = flip_bit(new_row[row], new_row.len() - 1 - pos.1);
             let new_score = Self::score_2(self, &new_row, &new_col);
             if new_score > 0 && new_score != original_score {
                 return new_score;
             }
         }
 
-        original_score
+        0
     }
 }
 
@@ -327,20 +347,35 @@ mod tests {
     #[test]
     fn reflection_test() {
         let v: Vec<u32> = vec![0, 0, 0, 0, 1, 1, 0, 0, 1, 1];
-        assert_eq!(MirrorField::reflection(&v), 7);
+        assert_eq!(MirrorField::reflection(&v).unwrap(), 7);
     }
 
     #[test]
     fn part_2_test() {
-        let input = "#.##..##.
-        ..#.##.#.
-        ##......#
-        ##......#
-        ..#.##.#.
-        ..##..##.
-        #.#.##.#.";
-
-        assert_eq!(part_2(input), 300);
+        assert_eq!(
+            part_2(
+                "#.##..##.
+                ..#.##.#.
+                ##......#
+                ##......#
+                ..#.##.#.
+                ..##..##.
+                #.#.##.#."
+            ),
+            300
+        );
+        assert_eq!(
+            part_2(
+                "#...##..#
+                #....#..#
+                ..##..###
+                #####.##.
+                #####.##.
+                ..##..###
+                #....#..#"
+            ),
+            100
+        );
     }
 
     #[test]
