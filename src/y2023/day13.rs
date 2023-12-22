@@ -37,15 +37,16 @@ fn flip_bit(a: u32, index: usize) -> u32 {
 struct MirrorField {
     rows: Vec<u32>,
     cols: Vec<u32>,
+    string: String,
 }
 
 impl MirrorField {
     fn row_reflection(&self) -> Option<usize> {
-        Self::reflection(&self.rows)
+        Self::reflection(&self.rows, None)
     }
 
     fn col_reflection(&self) -> Option<usize> {
-        Self::reflection(&self.cols)
+        Self::reflection(&self.cols, None)
     }
 
     fn is_reflection(vec: &Vec<u32>, n: usize) -> bool {
@@ -93,15 +94,15 @@ impl MirrorField {
         result
     }
 
-    fn reflection(vec: &Vec<u32>) -> Option<usize> {
+    fn reflection(vec: &Vec<u32>, skip: Option<usize>) -> Option<usize> {
         let mut result = None;
         let mut m = vec.len() / 2 + 1;
         for n in (0..=(vec.len() / 2)).rev() {
-            if Self::is_reflection(vec, n) {
+            if Self::is_reflection(vec, n) && skip != Some(n + 1) {
                 result = Some(n);
                 break;
             }
-            if m + 1 < vec.len() && Self::is_reflection(vec, m) {
+            if m + 1 < vec.len() && Self::is_reflection(vec, m) && skip != Some(m + 1) {
                 result = Some(m);
                 break;
             }
@@ -117,17 +118,20 @@ impl MirrorField {
 
     fn score_2(&self, rows: &Vec<u32>, cols: &Vec<u32>) -> usize {
         let old_row = Self::row_reflection(self);
-        let new_row = Self::reflection(rows);
+        let new_row = Self::reflection(rows, old_row);
         if old_row != new_row {
-            return new_row.unwrap_or(0) * 100;
+            if let Some(new_row) = new_row {
+                return new_row * 100;
+            }
         }
 
-        Self::reflection(cols).unwrap_or(0)
+        let old_col = Self::col_reflection(self);
+        Self::reflection(cols, old_col).unwrap_or(0)
     }
 
     fn smudge_score(&self) -> usize {
         let original_score = Self::score(self);
-        println!("Self {:?}", self);
+        // println!("Self {:?}", self);
         let row_possibilities = Self::find_all_differences(&self.rows);
         for pos in row_possibilities {
             let mut new_row = self.rows.clone();
@@ -135,21 +139,21 @@ impl MirrorField {
             let column_bit_index = bit_difference_index(new_row[pos.0], new_row[pos.1]);
             let column = new_col.len() - column_bit_index as usize - 1;
 
-            println!("Posibilities in row {} and {}", pos.0, pos.1);
-            println!(
-                "Should update column {} from bit index {}",
-                column, column_bit_index
-            );
+            // println!("Posibilities in row {} and {}", pos.0, pos.1);
+            // println!(
+            //     "Should update column {} from bit index {}",
+            //     column, column_bit_index
+            // );
             new_row[pos.0] = flip_bit(new_row[pos.0], column_bit_index as usize);
-            println!(
-                "Row before {:b}, after {:b}",
-                self.rows[pos.0], new_row[pos.0]
-            );
+            // println!(
+            //     "Row before {:b}, after {:b}",
+            //     self.rows[pos.0], new_row[pos.0]
+            // );
             new_col[column] = flip_bit(new_col[column], new_row.len() - 1 - column);
-            println!(
-                "Col before {:b}, after {:b}",
-                self.cols[column], new_col[column]
-            );
+            // println!(
+            //     "Col before {:b}, after {:b}",
+            //     self.cols[column], new_col[column]
+            // );
             let new_score = Self::score_2(self, &new_row, &new_col);
             if new_score > 0 && new_score != original_score {
                 return new_score;
@@ -182,6 +186,9 @@ impl MirrorField {
             let mut new_row = self.rows.clone();
             let mut new_col = self.cols.clone();
             new_col[pos.1] = flip_bit(new_col[pos.1], row_bit_index as usize);
+            if new_row.len() < 1 + pos.1 {
+                continue;
+            }
             new_row[row] = flip_bit(new_row[row], new_row.len() - 1 - pos.1);
             let new_score = Self::score_2(self, &new_row, &new_col);
             if new_score > 0 && new_score != original_score {
@@ -189,6 +196,7 @@ impl MirrorField {
             }
         }
 
+        println!("Problem with:\n{}", self.string);
         0
     }
 }
@@ -233,7 +241,11 @@ impl FromStr for MirrorField {
             cols.push(number);
         }
 
-        Ok(MirrorField { rows, cols })
+        Ok(MirrorField {
+            rows,
+            cols,
+            string: String::from(s),
+        })
     }
 }
 
@@ -347,7 +359,7 @@ mod tests {
     #[test]
     fn reflection_test() {
         let v: Vec<u32> = vec![0, 0, 0, 0, 1, 1, 0, 0, 1, 1];
-        assert_eq!(MirrorField::reflection(&v).unwrap(), 7);
+        assert_eq!(MirrorField::reflection(&v, None).unwrap(), 7);
     }
 
     #[test]
@@ -393,6 +405,62 @@ mod tests {
         #...#...###....
         ..#.....#.##...
         ....#......#.##"
+            ),
+            0
+        );
+        assert_ne!(
+            part_2(
+                "#.###..
+        #.###.#
+        ##..##.
+        ......#
+        ..##...
+        #....#.
+        #....#."
+            ),
+            0
+        );;
+                assert_ne!(
+                    part_2(
+                        "#.####.
+        ####..#
+        #####..
+        ....##.
+        #..###.
+        ####..#
+        ####..#"
+                    ),
+                    0
+                );
+                assert_ne!(
+                    part_2(
+                        ".........##..##..
+        ........#..##..#.
+        .######..######..
+        ..#..#..##.##.##.
+        .###.##..#.##.#..
+        ###..####.####.##
+        ##....##.#....#.#"
+                    ),
+                    0
+                );
+        assert_ne!(
+            part_2(
+                "####.#.......
+#.#.###.####.
+.#..##.####..
+.....#.#....#
+.#.#...##...#
+.#.#...##...#
+.....#.#....#
+.#..##.####..
+#.#.###.####.
+####.#.......
+..#.....#.#..
+#.#..#.##...#
+#...#......#.
+##.#..####.##
+.#.#..####.##"
             ),
             0
         );
