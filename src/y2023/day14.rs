@@ -1,17 +1,18 @@
 use core::fmt;
 use std::{
     cmp::Ordering,
+    collections::HashMap,
     fmt::{Display, Formatter},
     str::FromStr,
 };
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone, Copy, Eq, Hash)]
 enum BoulderShape {
     Round,
     Square,
 }
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone, Copy, Eq, Hash)]
 struct Boulder {
     shape: BoulderShape,
     row: usize,
@@ -27,7 +28,7 @@ impl Display for Boulder {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
 struct Dish {
     boulders: Vec<Boulder>,
     height: usize,
@@ -69,7 +70,7 @@ impl Dish {
     fn sort_by_row(&self) -> Vec<Vec<Boulder>> {
         let mut rows: Vec<Vec<Boulder>> = vec![];
 
-        for _ in 0..self.width {
+        for _ in 0..self.height {
             rows.push(vec![]);
         }
 
@@ -90,23 +91,61 @@ impl Dish {
     }
 
     fn tilt_up(&self) -> Dish {
-        let mut columns = self.sort_by_column();
+        let columns = self.sort_by_column();
 
-        for column in &mut columns {
+        // println!("Tilt up");
+        self.tilt_high(columns, true)
+    }
+
+    fn tilt_down(&self) -> Dish {
+        let columns = self.sort_by_column();
+
+        // println!("Tilt down");
+        self.tilt_low(columns, true)
+    }
+
+    fn tilt_left(&self) -> Dish {
+        let rows = self.sort_by_row();
+
+        // println!("Tilt left");
+        self.tilt_high(rows, false)
+    }
+
+    fn tilt_right(&self) -> Dish {
+        let rows = self.sort_by_row();
+
+        // println!("Tilt right");
+        self.tilt_low(rows, false)
+    }
+
+    fn spin(&self) -> Dish {
+        self.tilt_up().tilt_left().tilt_down().tilt_right()
+    }
+
+    fn tilt_high(&self, mut vecs: Vec<Vec<Boulder>>, is_vertical: bool) -> Dish {
+        for vec in &mut vecs {
             let mut last: Option<&mut Boulder> = None;
-            for boulder in column {
+            for boulder in vec {
                 if let Some(last) = last {
                     if boulder.shape == BoulderShape::Round {
-                        boulder.row = last.row + 1;
+                        if is_vertical {
+                            boulder.row = last.row + 1;
+                        } else {
+                            boulder.col = last.col + 1;
+                        }
                     }
                 } else if boulder.shape == BoulderShape::Round {
-                    boulder.row = 0
+                    if is_vertical {
+                        boulder.row = 0;
+                    } else {
+                        boulder.col = 0;
+                    }
                 }
 
                 last = Some(boulder)
             }
         }
-        let boulders: Vec<Boulder> = columns.iter().flatten().copied().collect();
+        let boulders: Vec<Boulder> = vecs.iter().flatten().copied().collect();
 
         Dish {
             boulders,
@@ -115,24 +154,30 @@ impl Dish {
         }
     }
 
-    fn tilt_down(&self) -> Dish {
-        let mut columns = self.sort_by_column();
-
-        for column in &mut columns {
+    fn tilt_low(&self, mut vecs: Vec<Vec<Boulder>>, is_vertical: bool) -> Dish {
+        for vec in &mut vecs {
             let mut last: Option<&mut Boulder> = None;
-            for boulder in column.iter_mut().rev() {
+            for boulder in vec.iter_mut().rev() {
                 if let Some(last) = last {
                     if boulder.shape == BoulderShape::Round {
-                        boulder.row = last.row - 1;
+                        if is_vertical {
+                            boulder.row = last.row - 1;
+                        } else {
+                            boulder.col = last.col - 1;
+                        }
                     }
                 } else if boulder.shape == BoulderShape::Round {
-                    boulder.row = self.height
+                    if is_vertical {
+                        boulder.row = self.height - 1;
+                    } else {
+                        boulder.col = self.width - 1;
+                    }
                 }
 
                 last = Some(boulder)
             }
         }
-        let boulders: Vec<Boulder> = columns.iter().flatten().copied().collect();
+        let boulders: Vec<Boulder> = vecs.iter().flatten().copied().collect();
 
         Dish {
             boulders,
@@ -195,8 +240,47 @@ pub fn part_1(input: &str) -> u32 {
     dishes.iter().map(|d| d.tilt_up().score()).sum()
 }
 
-pub fn part_2(_input: &str) -> usize {
-    0
+pub fn part_2(input: &str) -> u32 {
+    let mut dish = Dish::from_str(input).unwrap();
+    let mut memo: HashMap<Dish, i32> = HashMap::new();
+
+    let mut cycle = 0;
+    let mut cycle_size = None;
+
+    loop {
+        dish = dish.spin();
+        cycle += 1;
+        // println!("iter {} score {}", cycle, dish.score());
+
+        if let Some(result) = memo.get(&dish) {
+            // println!("Cycle detected, {}", result);
+            cycle_size = Some(cycle - result);
+            break;
+        } else {
+            memo.insert(dish.clone(), cycle);
+        }
+    }
+
+    let target_cycle = 1_000_000_000;
+    let target_cycle_remainder = target_cycle % cycle_size.unwrap();
+
+    loop {
+        dish = dish.spin();
+        cycle += 1;
+
+        // println!(
+        //     "Cycle size is {}, cycle position {}, target_cycle_remainder {}",
+        //     cycle_size,
+        //     cycle % cycle_size,
+        //     target_cycle_remainder
+        // );
+
+        if cycle % cycle_size.unwrap() == target_cycle_remainder {
+            break;
+        }
+    }
+
+    dish.score()
 }
 
 #[cfg(test)]
@@ -272,6 +356,42 @@ mod tests {
         .unwrap();
 
         assert_eq!(dish1.score(), dish2.score());
+    }
+
+    #[test]
+    fn spin_cycle() {
+        let mut dish = Dish::from_str(
+            "O....#....
+        O.OO#....#
+        .....##...
+        OO.#O....O
+        .O.....O#.
+        O.#..O.#.#
+        ..O..#O..O
+        .......O..
+        #....###..
+        #OO..#....",
+        )
+        .unwrap();
+        dish = dish.spin();
+
+        assert_eq!(
+            dish.score(),
+            Dish::from_str(
+                ".....#....
+        ....#...O#
+        ...OO##...
+        .OO#......
+        .....OOO#.
+        .O#...O#.#
+        ....O#....
+        ......OOOO
+        #...O###..
+        #..OO#...."
+            )
+            .unwrap()
+            .score()
+        )
     }
 
     #[test]
