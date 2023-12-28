@@ -13,8 +13,6 @@ struct Lens<'a> {
     box_id: u32,
 }
 
-#[derive(Debug, PartialEq)]
-struct ParseLensError;
 impl<'a> From<&'a str> for Lens<'a> {
     fn from(s: &'a str) -> Lens<'a> {
         if let Some(index) = s.chars().position(|c| c == '-') {
