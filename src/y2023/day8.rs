@@ -150,7 +150,7 @@ pub fn part_2(input: &Vec<String>) -> u64 {
     let mut step: u64 = 0;
     let mut already_visited: Vec<(usize, u64)> = vec![];
 
-    let mut found_first = false;
+    // let mut   found_first = false;
     'outer: loop {
         let movement = moves.as_bytes()[step as usize % moves.len()];
 
@@ -168,7 +168,7 @@ pub fn part_2(input: &Vec<String>) -> u64 {
                 //     idx, current[idx].name, step, last, found_first
                 // );
                 already_visited.push((idx, step));
-                found_first = true;
+                // found_first = true;
             }
             let node = match movement {
                 b'L' => map.get(&node.left.to_string()),

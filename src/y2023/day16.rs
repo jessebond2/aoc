@@ -1,13 +1,6 @@
 use std::cmp;
 use std::collections::HashSet;
-
-#[derive(Debug, Eq, PartialEq, Hash, Clone, Copy)]
-enum Direction {
-    Up,
-    Down,
-    Left,
-    Right,
-}
+use super::direction::Direction;
 
 #[derive(Debug)]
 struct LightBeam {
