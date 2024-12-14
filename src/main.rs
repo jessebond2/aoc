@@ -3,6 +3,7 @@ use crate::utils::{read_file_to_string, read_lines_to_vec};
 pub mod utils;
 pub mod y2021;
 pub mod y2023;
+pub mod y2024;
 
 fn main() {
     let input =
@@ -194,5 +195,19 @@ fn main() {
     // let result_2 = crate::y2023::day20::part_2(&input);
     // println!("Result from day20 part 2: {}", result_2);
 
-    
+    println!();
+    println!();
+    println!("================================================");
+    println!();
+    println!("2024");
+    println!();
+    println!("================================================");
+    println!();
+    let input =
+        read_file_to_string("./input/2024/day20.txt").expect("Unable to parse file into integers");
+    let result_1 = crate::y2023::day20::part_1(&input);
+    println!("Result from day20 part 1: {}", result_1);
+
+    let result_2 = crate::y2023::day20::part_2(&input);
+    println!("Result from day20 part 2: {}", result_2);
 }
