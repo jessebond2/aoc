@@ -245,7 +245,7 @@ pub fn part_2(input: &str) -> u32 {
     let mut memo: HashMap<Dish, i32> = HashMap::new();
 
     let mut cycle = 0;
-    let mut cycle_size = None;
+    let cycle_size;
 
     loop {
         dish = dish.spin();

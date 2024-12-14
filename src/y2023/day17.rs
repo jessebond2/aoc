@@ -15,7 +15,7 @@ impl City {
     fn minimize_heatloss(&self) -> u32 {
         let mut memo: CityMemo = HashMap::new();
         let start: Point = (0, 0);
-        let end: Point = (self.width as isize - 1, self.height as isize - 1);
+        let _end: Point = (self.width as isize - 1, self.height as isize - 1);
 
         memo.insert(start, (DirectionHeading::Down(0), 0));
         self.minimize_heatloss_helper((0, 1), DirectionHeading::Down(1), &mut memo);
