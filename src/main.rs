@@ -204,10 +204,10 @@ fn main() {
     println!("================================================");
     println!();
     let input =
-        read_file_to_string("./input/2024/day20.txt").expect("Unable to parse file into integers");
-    let result_1 = crate::y2023::day20::part_1(&input);
-    println!("Result from day20 part 1: {}", result_1);
+        read_file_to_string("./input/2024/day1.txt").expect("Unable to parse file into integers");
+    let result_1 = crate::y2024::day1::part_1(&input);
+    println!("Result from day1 part 1: {}", result_1);
 
-    let result_2 = crate::y2023::day20::part_2(&input);
-    println!("Result from day20 part 2: {}", result_2);
+    let result_2 = crate::y2024::day1::part_2(&input);
+    println!("Result from day1 part 2: {}", result_2);
 }
