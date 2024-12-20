@@ -1,5 +1,7 @@
 use crate::utils::{read_file_to_string, read_lines_to_vec};
 use clap::{Parser, Subcommand};
+use reqwest::blocking::Client;
+use std::{fs::write, path::Path};
 
 pub mod utils;
 pub mod y2021;
@@ -8,14 +10,23 @@ pub mod y2024;
 
 #[derive(Subcommand, Debug)]
 enum Commands {
-    Run,
-    Download,
+    Run {
+        #[arg(long, default_value_t = 25)]
+        day: u8,
+    },
+    Download {
+        #[arg(short, long)]
+        cookie: String,
+
+        #[arg(long, default_value_t = 25)]
+        day: u8,
+    },
 }
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Cli {
-    #[arg(short, long, default_value_t = 2025)]
+    #[arg(short, long, default_value_t = 2024)]
     year: u16,
 
     #[command(subcommand)]
@@ -210,14 +221,43 @@ fn aoc_2023() {
     println!("Result from day20 part 2: {}", result_2);
 }
 
-fn aoc_2024() {
-    let input =
-        read_file_to_string("./input/2024/day1.txt").expect("Unable to parse file into integers");
+fn aoc_2024(day: u8, _debug: u8) {
+    let filename = format!("./input/2024/day{day}.txt");
+    let input = read_file_to_string(&filename).expect("Unable to parse file into integers");
     let result_1 = crate::y2024::day1::part_1(&input);
-    println!("Result from day1 part 1: {}", result_1);
+    println!("Result from day {day} part 1: {}", result_1);
 
     let result_2 = crate::y2024::day1::part_2(&input);
-    println!("Result from day1 part 2: {}", result_2);
+    println!("Result from day {day} part 2: {}", result_2);
+}
+
+fn download(year: u16, day: u8, cookie: &str) {
+    let client = Client::builder().build().unwrap();
+
+    for day in 1..day + 1 {
+        let url = format!("https://adventofcode.com/{year}/day/{day}/input");
+
+        match client
+            .get(url)
+            .header(reqwest::header::COOKIE, cookie)
+            .send()
+        {
+            Ok(response) => {
+                let body = response.bytes().unwrap();
+                let path_string = format!("./input/{year}/day{day}.txt");
+                let out_path = Path::new(&path_string);
+                let result = write(out_path, &body);
+                match result {
+                    Ok(_) => println!("Saved day {day} to {path_string}"),
+                    Err(_) => println!("Error saving day {day} to {path_string}"),
+                }
+            }
+            Err(error) => {
+                println!("Error downloading year {year} day {day}");
+                println!("{error}");
+            }
+        }
+    }
 }
 
 fn main() {
@@ -233,16 +273,18 @@ fn main() {
     }
 
     match &cli.command {
-        Some(Commands::Run) => {
+        Some(Commands::Run { day }) => {
             println!("Running AoC year {}!", cli.year);
             match cli.year {
                 2021 => aoc_2021(),
                 2023 => aoc_2023(),
-                _ => aoc_2024(),
+                _ => aoc_2024(*day, cli.debug),
             }
         }
-        Some(Commands::Download) => {
-            println!("Downloading AoC year {}!", cli.year)
+        Some(Commands::Download { cookie, day }) => {
+            println!("Downloading AoC year {}!", cli.year);
+
+            download(cli.year, *day, cookie);
         }
         None => {}
     }
