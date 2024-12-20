@@ -1,17 +1,29 @@
-use clap::Parser;
-
 use crate::utils::{read_file_to_string, read_lines_to_vec};
+use clap::{Parser, Subcommand};
 
 pub mod utils;
 pub mod y2021;
 pub mod y2023;
 pub mod y2024;
 
+#[derive(Subcommand, Debug)]
+enum Commands {
+    Run,
+    Download,
+}
+
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
-struct Args {
+struct Cli {
     #[arg(short, long, default_value_t = 2025)]
     year: u16,
+
+    #[command(subcommand)]
+    command: Option<Commands>,
+
+    /// Turn debugging information on
+    #[arg(short, long, action = clap::ArgAction::Count)]
+    debug: u8,
 }
 
 fn aoc_2021() {
@@ -209,13 +221,29 @@ fn aoc_2024() {
 }
 
 fn main() {
-    let args = Args::parse();
+    let cli = Cli::parse();
 
-    println!("AoC year {}!", args.year);
+    println!("AoC year {}!", cli.year);
 
-    match args.year {
-        2021 => aoc_2021(),
-        2023 => aoc_2023(),
-        _ => aoc_2024(),
+    match cli.debug {
+        0 => println!("Debug mode is off"),
+        1 => println!("Debug mode is kind of on"),
+        2 => println!("Debug mode is on"),
+        _ => println!("Don't be crazy"),
+    }
+
+    match &cli.command {
+        Some(Commands::Run) => {
+            println!("Running AoC year {}!", cli.year);
+            match cli.year {
+                2021 => aoc_2021(),
+                2023 => aoc_2023(),
+                _ => aoc_2024(),
+            }
+        }
+        Some(Commands::Download) => {
+            println!("Downloading AoC year {}!", cli.year)
+        }
+        None => {}
     }
 }
