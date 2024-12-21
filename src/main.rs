@@ -231,11 +231,23 @@ fn aoc_2024(day: u8, _debug: u8) {
         1 => {
             result_1 = crate::y2024::day1::part_1(&input);
             result_2 = crate::y2024::day1::part_2(&input);
-        },
+        }
         2 => {
             result_1 = crate::y2024::day2::part_1(&input);
             result_2 = crate::y2024::day2::part_2(&input);
-        },
+        }
+        3 => {
+            result_1 = crate::y2024::day3::part_1(&input);
+            result_2 = crate::y2024::day3::part_2(&input);
+        }
+        4 => {
+            result_1 = crate::y2024::day4::part_1(&input);
+            result_2 = crate::y2024::day4::part_2(&input);
+        }
+        5 => {
+            result_1 = crate::y2024::day5::part_1(&input);
+            result_2 = crate::y2024::day5::part_2(&input);
+        }
         _ => {
             panic!("Day does not exist");
         }
