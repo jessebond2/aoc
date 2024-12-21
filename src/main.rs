@@ -224,10 +224,23 @@ fn aoc_2023() {
 fn aoc_2024(day: u8, _debug: u8) {
     let filename = format!("./input/2024/day{day}.txt");
     let input = read_file_to_string(&filename).expect("Unable to parse file into integers");
-    let result_1 = crate::y2024::day1::part_1(&input);
-    println!("Result from day {day} part 1: {}", result_1);
 
-    let result_2 = crate::y2024::day1::part_2(&input);
+    let result_1;
+    let result_2;
+    match day {
+        1 => {
+            result_1 = crate::y2024::day1::part_1(&input);
+            result_2 = crate::y2024::day1::part_2(&input);
+        },
+        2 => {
+            result_1 = crate::y2024::day2::part_1(&input);
+            result_2 = crate::y2024::day2::part_2(&input);
+        },
+        _ => {
+            panic!("Day does not exist");
+        }
+    }
+    println!("Result from day {day} part 1: {}", result_1);
     println!("Result from day {day} part 2: {}", result_2);
 }
 
